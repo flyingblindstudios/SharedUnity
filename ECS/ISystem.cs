@@ -5,11 +5,12 @@ namespace ECS.Systems
 {
     
     
+    //TODO: Make update by behaviour manager, so we can decide to receive update or not!s
     public abstract class ISystem : MonoBehaviour
     {
         
         public List<EntityDescriptor> m_Entities = null;
-
+        public bool m_UseFixedUpdate = false;
         
         /*public ISystem()
         {
@@ -26,19 +27,35 @@ namespace ECS.Systems
        
        void Update()
        {
+           if(m_Entities.Count == 0 || m_UseFixedUpdate)
+           {
+               return;
+           }
+
+
+           
+           
            OnUpdate();
        }
+
+       void FixedUpdate()
+       {
+           if(m_Entities.Count == 0 || !m_UseFixedUpdate)
+           {
+               return;
+           }
+           OnUpdate();
+       }
+
       
         public abstract Type[] AcceptedNodes();
 
         
         void OnEntityCreated(EntityDescriptor _descriptor)
         {
-            Debug.Log("OnEntityCreated system");
             if( CheckEntityComponents(_descriptor))
             {
                 m_Entities.Add(_descriptor);
-                Debug.Log("entity added! ");
             }
         }
 
@@ -80,6 +97,8 @@ namespace ECS.Systems
         }
         
         protected abstract void OnUpdate();
+
+
     }
 
 }

@@ -14,7 +14,6 @@ public class EntityDescriptor : MonoBehaviour {
 	void Awake()
 	{	
 		m_IComponents = new Dictionary <Type, IComponent>();
-		Debug.Log("Entity awake");
 	}
 
 	void Start()
@@ -25,7 +24,6 @@ public class EntityDescriptor : MonoBehaviour {
 		m_Transform = this.transform;
 		EntityManager.GetInstance().RegisterEntity(this);
 		m_EntityStarted = true;
-		Debug.Log("Entity started and res");
 	}
 
 	void AddComponent(Type _componentType)
@@ -33,13 +31,12 @@ public class EntityDescriptor : MonoBehaviour {
 		if(_componentType is IComponent)
 		{
 			IComponent ic =  (IComponent) m_GameObject.AddComponent( _componentType );
-		RegisterIComponent(ic);
+			RegisterIComponent(ic);
 
 		}
 		else
 		{
-			Debug.Log("component is not an icomponent");
-
+			Debug.Log("[ECS] Component is not an icomponent " + this.name);
 		}
 		
 		
@@ -54,6 +51,7 @@ public class EntityDescriptor : MonoBehaviour {
 		if(m_EntityStarted)
 		{
 			//fire event to system? Or Entity that components changed
+			//need to fire off event to entity or system manager that entity changed! So we can react to realtime changes!
 		}
 
 	}
@@ -70,7 +68,14 @@ public class EntityDescriptor : MonoBehaviour {
 
 	void OnDestroy()
 	{
-		EntityManager.GetInstance().DeRegisterEntity(this);
+		//somehow check if applicaiton is quiting?
+		if(EntityManager.GetInstance() != null)
+		{
+			EntityManager.GetInstance().DeRegisterEntity(this);
+
+		}
+		
+		
 
 	}
 

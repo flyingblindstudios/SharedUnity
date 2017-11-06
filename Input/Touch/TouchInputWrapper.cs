@@ -17,7 +17,7 @@ public class TouchInputWrapper
 		#if UNITY_EDITOR
 			return Input.GetMouseButtonDown(_touch);
 		#else
-			return Input.touches[_touch].phase == TouchPhase.Begin ;
+			return Input.touches[_touch].phase == TouchPhase.Began ;
 		#endif
 
 	}
@@ -41,6 +41,8 @@ public class TouchInputWrapper
 		#endif
 
 	}
+
+	
 		
 	
 }

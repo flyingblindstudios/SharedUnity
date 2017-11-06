@@ -19,7 +19,6 @@ public class EntityManager : Singleton<EntityManager>
 
 	public void RegisterEntity(EntityDescriptor _entitiy)
 	{
-		Debug.Log("RegisterEntity");
 		m_Endities.Add(_entitiy);
 		OnEntityAddedDelegate(_entitiy);
 	}
