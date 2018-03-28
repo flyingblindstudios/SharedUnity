@@ -20,7 +20,9 @@ public class ProceduralSphere : MonoBehaviour {
 	private Mesh m_Mesh;
 	private Vector3[] m_Vertices;
     private Vector2[] m_UV;
-    private int[] m_Triangles;
+    private int[] m_TrianglesX;
+    private int[] m_TrianglesY;
+    private int[] m_TrianglesZ;
 	private Vector3[] m_Normals = null;
 
 	public int m_SizeX, m_SizeY, m_SizeZ;
@@ -30,64 +32,84 @@ public class ProceduralSphere : MonoBehaviour {
 
 	/**************INPUT***************/
 	public int m_Seed = 200;
-	private int m_Seed_private = 200;
+
 
 	public float m_NoiseScale = 2.0f;
-	private float m_NoiseScale_private = 2.0f;
+
 
 	public float m_NoiseFactor = 0.05f;
-	private float m_NoiseFactor_private = 0.05f;
+
 
 	public float m_MaxDiff = 1.5f;
 	public float m_MinDiff = 0.0f;
 
 
+	public bool m_Quantization = false;
+	public float m_QuantizationSteps = 1.0f;
+
+    public Transform m_RootTrees;
+    public GameObject m_TreePrefab;
+
+
+
+    public ProceduralSphere m_CoverSphere;
+    public bool m_RemoveCoveredTriangles = false;
+
 	// Use this for initialization
-	void Awake () 
+	void Start () 
 	{
-		m_Seed_private = m_Seed;
-		m_NoiseScale_private = m_NoiseScale;
-		m_NoiseFactor_private = m_NoiseFactor;
-		
+		//GenerateSphere(true);
+        GenerateTrees();
+	}
+
+	void OnValidate()
+	{
 		GenerateSphere(true);
-		
 	}
 
-	void Update()
-	{
-		#if UNITY_EDITOR
-			InEditorUpdate();
-		#endif
 
-	}
 	
-	void InEditorUpdate()
-	{	
-		if(m_Seed_private != m_Seed)
-		{
-			m_Seed_private = m_Seed;
-			GenerateSphere();
-			//
-		} 
+    void GenerateTrees()
+    {
+        if (m_RootTrees != null)
+        {
+            DestroyImmediate(m_RootTrees.gameObject);
+        }
+        m_RootTrees = (new GameObject("Treeroot")).transform;
+        m_RootTrees.transform.parent = this.transform;
+        int decoLayer = LayerMask.NameToLayer("decoration");
+        m_RootTrees.gameObject.layer = decoLayer;
+        for (int i = 0; i < 500;i++)
+        {
+            GameObject tree = Instantiate(m_TreePrefab,m_RootTrees);
 
-		if(m_NoiseScale_private != m_NoiseScale)
-		{
-			m_NoiseScale_private = m_NoiseScale;
-			GenerateSphere();
-			//
-		}
+            Vector3 randomPoint = Random.onUnitSphere;
 
 
-		if(m_NoiseFactor_private != m_NoiseFactor)
-		{
-			m_NoiseFactor_private = m_NoiseFactor;
-			GenerateSphere();
-			//
-		}
+            randomPoint.Normalize();
+            randomPoint.x = randomPoint.x / 2.0f;
+            randomPoint.y = randomPoint.y / 2.0f;
+            randomPoint.z = randomPoint.z / 2.0f;
 
-	}
+            tree.transform.position = (randomPoint + GetOffsetForPosition(randomPoint)) * this.transform.localScale.x ;
 
-	void GenerateSphere(bool _init = false)
+            tree.transform.localScale = Vector3.one;
+
+
+            Vector3 topVector = randomPoint-this.transform.position;
+            topVector.Normalize();
+
+            tree.transform.up = topVector;
+
+        }
+
+        //batch tree static
+        StaticBatchingUtility.Combine(m_RootTrees.gameObject);
+
+    }
+
+
+	public void GenerateSphere(bool _init = false)
 	{
 		
 		if(m_SizeY < 2)
@@ -113,61 +135,202 @@ public class ProceduralSphere : MonoBehaviour {
 			{
 				GenerateWithSeperateSides();
 				CreateTriangles ();
-				//RemoveDoubles(); 
 				
+                //can not be removed, since we need sperate uv coorinates
+                //RemoveDoubles(); 
+				
+                //distribution is needed for making the verticies around the sphere at the end more even
 				MakeDistribution();
 			}
-			MakeUniformSphere();
-			GenerateNoise();
+			
+            //make every vertice have a distane of 1 from the origin
+            MakeUniformSphere();
+			
+            //genereate Noise
+            GenerateNoise();
+
+			if(m_Quantization)
+			{
+				Quantization();
+			}
 		}
-		m_Mesh.vertices = m_Vertices;
-		m_Mesh.triangles = m_Triangles;
+
+
+        if(m_RemoveCoveredTriangles && m_CoverSphere != null)
+        {
+            RemoveCoveredTriangels();
+
+        }
+		
+
+        //assign mesh
+        m_Mesh.vertices = m_Vertices;
+        //m_Mesh.triangles = m_Triangles;
+
+        m_Mesh.subMeshCount = 3;
+        m_Mesh.SetTriangles(m_TrianglesZ, 0);
+        m_Mesh.SetTriangles(m_TrianglesY, 1);
+        m_Mesh.SetTriangles(m_TrianglesX, 2);
+
         m_Mesh.uv = m_UV;
+  
+        //recalculate normals -> Maybe we can do this?
         m_Mesh.RecalculateNormals();
-		//MakeNormalsSeemless ();
-		m_Mesh.RecalculateTangents();
+		
+        //avarages the normals on seem positions
+        MakeNormalsSeemless ();
+		
+        //we need to reacalculate the tangens after assigning the normals
+        m_Mesh.RecalculateTangents();
         
 		m_Normals = m_Mesh.normals;
-        //todo!!!:: set the normals of the edges to the same !
-        //GetComponent<MeshRenderer>()
+
 		GetComponent<MeshFilter>().mesh = m_Mesh;
+    }
+
+	void Quantization()
+	{
+		
+		for (int i = 0; i < m_Vertices.Length; i++) 
+		{
+            m_Vertices[i] = QuantizateVector(m_Vertices[i]);
+		}
+
+	}
+
+    Vector3 QuantizateVector(Vector3 _vec)
+    {
+        float mag = 0.0f;
+        mag = _vec.magnitude;
+        mag = mag - (mag % m_QuantizationSteps);
+        return Vector3.ClampMagnitude(_vec, mag);
+    }
+
+    void RemoveCoveredTriangels()
+    {
+        List<int> m_Triangles = new List<int>();
+
+        for(int i = 0; i < m_TrianglesX.Length;i+=3)
+        {
+            Vector3 one = m_Vertices[m_TrianglesX[i]];
+            Vector3 two = m_Vertices[m_TrianglesX[i+1]];
+            Vector3 three = m_Vertices[m_TrianglesX[i+2]];
+
+            float d1 = m_CoverSphere.GetDistanceFromUniSphereCenter(one);
+            float d2 = m_CoverSphere.GetDistanceFromUniSphereCenter(two);
+            float d3 = m_CoverSphere.GetDistanceFromUniSphereCenter(three);
+            float mag1 = one.magnitude*transform.localScale.x;
+            float mag2 = two.magnitude* transform.localScale.x;
+            float mag3 = three.magnitude* transform.localScale.x;
+            if(d1 < mag1 || d2 < mag2 || d3 < mag3 )
+            {
+                m_Triangles.Add(m_TrianglesX[i]);
+                m_Triangles.Add(m_TrianglesX[i+1]);
+                m_Triangles.Add(m_TrianglesX[i+2]);
+            }
+
+        }
+
+        m_TrianglesX = m_Triangles.ToArray();
+
+        m_Triangles = new List<int>();
+
+        for (int i = 0; i < m_TrianglesY.Length; i += 3)
+        {
+            Vector3 one = m_Vertices[m_TrianglesY[i]];
+            Vector3 two = m_Vertices[m_TrianglesY[i + 1]];
+            Vector3 three = m_Vertices[m_TrianglesY[i + 2]];
+
+            float d1 = m_CoverSphere.GetDistanceFromUniSphereCenter(one);
+            float d2 = m_CoverSphere.GetDistanceFromUniSphereCenter(two);
+            float d3 = m_CoverSphere.GetDistanceFromUniSphereCenter(three);
+            float mag1 = one.magnitude* transform.localScale.x;
+            float mag2 = two.magnitude* transform.localScale.x;
+            float mag3 = three.magnitude* transform.localScale.x;
+            if (d1 < mag1 || d2 < mag2 || d3 < mag3)
+            {
+                m_Triangles.Add(m_TrianglesY[i]);
+                m_Triangles.Add(m_TrianglesY[i + 1]);
+                m_Triangles.Add(m_TrianglesY[i + 2]);
+            }
+
+        }
+
+        m_TrianglesY = m_Triangles.ToArray();
+
+        m_Triangles = new List<int>();
+
+        for (int i = 0; i < m_TrianglesZ.Length; i += 3)
+        {
+            Vector3 one = m_Vertices[m_TrianglesZ[i]];
+            Vector3 two = m_Vertices[m_TrianglesZ[i + 1]];
+            Vector3 three = m_Vertices[m_TrianglesZ[i + 2]];
+
+            float d1 = m_CoverSphere.GetDistanceFromUniSphereCenter(one);
+            float d2 = m_CoverSphere.GetDistanceFromUniSphereCenter(two);
+            float d3 = m_CoverSphere.GetDistanceFromUniSphereCenter(three);
+            float mag1 = one.magnitude* transform.localScale.x;
+            float mag2 = two.magnitude* transform.localScale.x;
+            float mag3 = three.magnitude* transform.localScale.x;
+            if (d1 < mag1 || d2 < mag2 || d3 < mag3)
+            {
+                m_Triangles.Add(m_TrianglesZ[i]);
+                m_Triangles.Add(m_TrianglesZ[i + 1]);
+                m_Triangles.Add(m_TrianglesZ[i + 2]);
+            }
+
+        }
+
+        m_TrianglesZ = m_Triangles.ToArray();
+
+    }
+    //returns absolut
+    public float GetDistanceFromUniSphereCenter(Vector3 _point)
+    {
+        _point.Normalize();
+        _point.x = _point.x/2.0f;
+        _point.y = _point.y/2.0f;
+        _point.z = _point.z/2.0f;
+
+
+        //todo needs to take quantization into account
+        return (_point + GetOffsetForPosition(_point)).magnitude* transform.localScale.x;
+
+    }
+
+    Vector3 GetOffsetForPosition(Vector3 square)
+    {
+        //dont do this, init it only once!
+        GradientNoise gnoise = new GradientNoise(m_Seed);
+        //noise scale is for how fine graded the noise is.
+        //we need a combination between fine and rough noise
+        float noiseF = gnoise.GetValue(square.y * m_NoiseScale,square.x*m_NoiseScale,square.z*m_NoiseScale);
+    
+        //normal of the vertex
+        Vector3 normal =  square - this.transform.position;
+        normal.Normalize();
+        float nFactor =  noiseF * m_NoiseFactor; 
+        return normal *nFactor;
     }
 
 
 	void GenerateNoise()
 	{
 		//Persistence
-		PinkNoise noise = new PinkNoise(m_Seed_private);//new GradientNoise(200);
-		GradientNoise gnoise = new GradientNoise(m_Seed_private);
-		float scale = m_NoiseScale_private;
-		float factor = m_NoiseFactor_private/this.transform.localScale.x;
+		//PinkNoise noise = new PinkNoise(m_Seed);//new GradientNoise(200);
+		
+        //seems to be more smooth then pink noise
+
+		float scale = m_NoiseScale;
+        float factor = m_NoiseFactor;///this.transform.localScale.x;
 		Vector3 offset = new Vector3(0.5f,0.5f,0.5f);
 		for (int i = 0; i < m_Vertices.Length; i++) 
 		{
 			Vector3 square = m_Vertices[i];//+offset;
-			float noiseF = noise.GetValue(square.x*scale,square.y*scale,square.z*scale);
-		
 
-			Vector3 normal =  square - this.transform.position;
-			normal.Normalize();
-
-			//Debug.Log(noiseF);
-			float nFactor =  noiseF * factor; //Mathf.Clamp(noiseF * factor,m_MinDiff,m_MaxDiff);
-
-			
-
-			m_Vertices[i] = m_Vertices[i] + normal *nFactor;
+            m_Vertices[i] = m_Vertices[i] + GetOffsetForPosition(square);
 
 
-			float mag = (m_Vertices[i] - this.transform.position).magnitude;
-
-			//if(mag > 0.1f)
-			{
-			
-
-				//m_Vertices[i] = m_Vertices[i] + normal * gnoise.GetValue(square.x*scale*1,square.y,square.z*scale*1);// * factor;
-
-			}
 
 		}
 
@@ -300,7 +463,9 @@ public class ProceduralSphere : MonoBehaviour {
 		{
 			avg.Clear();
 			Vector3 newNormal = normals[i];
-			for(int k = 0; k < m_Vertices.Length; k++)
+			
+            //go through all verticies, if you find verticies which are on the same position, avarage normal
+            for(int k = 0; k < m_Vertices.Length; k++)
 			{
 				//if(/*(m_Vertices[i] - m_Vertices[k]).sqrMagnitude < 0.00001f*/)
 				if(m_Vertices[i].x == m_Vertices[k].x && m_Vertices[i].y == m_Vertices[k].y && m_Vertices[i].z == m_Vertices[k].z)
@@ -324,10 +489,6 @@ public class ProceduralSphere : MonoBehaviour {
 						normals[avg[k]] = newNormal.normalized;	
 				}
 			
-			}
-			else
-			{
-				Debug.Log("found only one");
 			}
 
 			
@@ -375,10 +536,20 @@ public class ProceduralSphere : MonoBehaviour {
 
         //m_Triangles
 
-        for (int i = 0; i < m_Triangles.Length;i++)
+
+        //uncomment again
+        for (int i = 0; i < m_TrianglesX.Length;i++)
 		{
-			m_Triangles[i] = mapping[m_Triangles[i]];
+			m_TrianglesX[i] = mapping[m_TrianglesX[i]];
 		}
+        for (int i = 0; i < m_TrianglesY.Length; i++)
+        {
+            m_TrianglesY[i] = mapping[m_TrianglesY[i]];
+        }
+        for (int i = 0; i < m_TrianglesZ.Length; i++)
+        {
+            m_TrianglesZ[i] = mapping[m_TrianglesZ[i]];
+        }
 
 	}
 
@@ -387,73 +558,89 @@ public class ProceduralSphere : MonoBehaviour {
 
 	private void CreateTriangles () {
 		int quads = ((m_SizeX-1) * (m_SizeZ-1)*2) + ((m_SizeX-1) * (m_SizeY-1))*2 + ((m_SizeZ-1) * (m_SizeY-1))*2;//(m_SizeX * m_SizeY + m_SizeX * m_SizeZ + m_SizeY * m_SizeZ) * 2;
-		m_Triangles = new int[quads * 6];
+
+        m_TrianglesX = new int[quads * 2];
+        m_TrianglesY = new int[quads * 2];
+        m_TrianglesZ = new int[quads * 2];
+
 		
 		int index = 0;
 		int offset = 0;
-		for(int x = 0; x < m_SizeX-1; x++ )
+		
+
+
+        //Y
+        for(int x = 0; x < m_SizeX-1; x++ )
 		{
 			for(int z = 0; z < m_SizeZ-1; z++ )
 			{
-				index = SetQuad(m_Triangles,index,x*m_SizeX + z, x*m_SizeX +  z+1,(x+1)*m_SizeX +z  , (x+1)*m_SizeX +z+1);
+                index = SetQuad(m_TrianglesY,index,x*m_SizeX + z, x*m_SizeX +  z+1,(x+1)*m_SizeX +z  , (x+1)*m_SizeX +z+1);
 			}
 		}
-
+      
 		offset = (m_SizeX) * (m_SizeZ);
-		
-		for(int x = 0; x < m_SizeX-1; x++ )
-		{
-			for(int z = 0; z < m_SizeZ-1; z++ )
-			{
 
-				index = SetQuad(m_Triangles,index, offset+ x*m_SizeX +  z+1, offset+  x*m_SizeX + z, offset+   (x+1)*m_SizeX +z+1, offset+ (x+1)*m_SizeX +z);
+        for (int x = 0; x < m_SizeX - 1; x++)
+        {
+            for (int z = 0; z < m_SizeZ - 1; z++)
+            {
+                index = SetQuad(m_TrianglesY,index, offset+ x*m_SizeX +  z+1, offset+  x*m_SizeX + z, offset+   (x+1)*m_SizeX +z+1, offset+ (x+1)*m_SizeX +z);
 			}
 		}
-		offset += (m_SizeX) * (m_SizeZ);
-	
+     
+        offset += (m_SizeX) * (m_SizeZ);
+        //offset = 0;
+        index = 0;
+        //Z
 		for(int x = 0; x < m_SizeX-1; x++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
 			{
-				index = SetQuad(m_Triangles,index, offset+ x*m_SizeX +  y+1,  offset+ x*m_SizeX + y,  offset+ (x+1)*m_SizeX +y+1, offset+ (x+1)*m_SizeX +y  );
+                index = SetQuad(m_TrianglesZ,index, offset+ x*m_SizeX +  y+1,  offset+ x*m_SizeX + y,  offset+ (x+1)*m_SizeX +y+1, offset+ (x+1)*m_SizeX +y  );
 			}
 
 		}
+
+
 		offset += (m_SizeX) * (m_SizeY);
 		
 		for(int x = 0; x < m_SizeX-1; x++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
 			{
-				index = SetQuad(m_Triangles,index, offset+ x*m_SizeX + y, offset+ x*m_SizeX +  y+1, offset+ (x+1)*m_SizeX +y  , offset+ (x+1)*m_SizeX +y+1);
+                index = SetQuad(m_TrianglesZ,index, offset+ x*m_SizeX + y, offset+ x*m_SizeX +  y+1, offset+ (x+1)*m_SizeX +y  , offset+ (x+1)*m_SizeX +y+1);
 			}
 
 		}
 		offset += (m_SizeX) * (m_SizeY);
+        //offset = 0;
+        index = 0;
 
 		for(int z = 0; z < m_SizeZ-1; z++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
 			{
-				index = SetQuad(m_Triangles,index, offset+ z*m_SizeX + y, offset+ z*m_SizeX +  y+1, offset+ (z+1)*m_SizeX +y  , offset+ (z+1)*m_SizeX +y+1);
+                index = SetQuad(m_TrianglesX,index, offset+ z*m_SizeX + y, offset+ z*m_SizeX +  y+1, offset+ (z+1)*m_SizeX +y  , offset+ (z+1)*m_SizeX +y+1);
 			}
 		}
 
 		offset += (m_SizeZ) * (m_SizeY);
-
+     
 		for(int z = 0; z < m_SizeZ-1; z++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
 			{
-				index = SetQuad(m_Triangles,index, offset+ z*m_SizeX +  y+1, offset+ z*m_SizeX + y, offset+ (z+1)*m_SizeX +y+1, offset+ (z+1)*m_SizeX +y   );
+                index = SetQuad(m_TrianglesX,index, offset+ z*m_SizeX +  y+1, offset+ z*m_SizeX + y, offset+ (z+1)*m_SizeX +y+1, offset+ (z+1)*m_SizeX +y   );
 			}
 
 		}
 		
 	}
 
-	private static int SetQuad (int[] triangles, int i, int v00, int v10, int v01, int v11) {
-//		Debug.Log(i);
+	private static int SetQuad (int[] triangles, int i, int v00, int v10, int v01, int v11) 
+    {
+        
+		//Debug.Log(i);
 		triangles[i] = v00;
 		triangles[i + 1] = triangles[i + 4] = v01;
 		triangles[i + 2] = triangles[i + 3] = v10;
@@ -506,13 +693,12 @@ public class ProceduralSphere : MonoBehaviour {
 
 	void MakeUniformSphere()
 	{
-		
 		for (int i = 0; i < m_Vertices.Length; i++) {
 
 			m_Vertices[i].Normalize();
-			m_Vertices[i].x = m_Vertices[i].x/2.0f;
-			m_Vertices[i].y = m_Vertices[i].y/2.0f;
-			m_Vertices[i].z = m_Vertices[i].z/2.0f;
+            m_Vertices[i].x = m_Vertices[i].x/2.0f;
+            m_Vertices[i].y = m_Vertices[i].y/2.0f;
+            m_Vertices[i].z = m_Vertices[i].z/2.0f;
 
 		}
 	}

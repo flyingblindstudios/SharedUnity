@@ -17,6 +17,7 @@ namespace ECS.Systems
 		EntityDescriptor m_RaycastObject = null;
 	//	Dictionary<InteractableComponent.INTERACTION_TYPE, bool> m_InteractiontypesChecker = new Dictionary<InteractableComponent.INTERACTION_TYPE, bool>();
 		
+
 		
 		// Update is called once per frame
 		protected override void OnUpdate () {
