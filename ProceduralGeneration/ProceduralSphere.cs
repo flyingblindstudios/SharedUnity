@@ -25,13 +25,26 @@ public class ProceduralSphere : MonoBehaviour {
     private int[] m_TrianglesZ;
 	private Vector3[] m_Normals = null;
 
-	public int m_SizeX, m_SizeY, m_SizeZ;
-	public METHODE m_Methode = METHODE.SEPERATE_SIDES;
+	
 
 
 
 	/**************INPUT***************/
-	public int m_Seed = 200;
+    [Header("Settings Generation")]
+
+    public int m_SizeX, m_SizeY, m_SizeZ;
+    public METHODE m_Methode = METHODE.SEPERATE_SIDES;
+
+    public float m_MaxDiff = 1.5f;
+    public float m_MinDiff = 0.0f;
+
+
+    public bool m_Quantization = false;
+    public float m_QuantizationSteps = 1.0f;
+	
+    [Header("Settings Random")]
+
+    public int m_Seed = 200;
 
 
 	public float m_NoiseScale = 2.0f;
@@ -40,12 +53,13 @@ public class ProceduralSphere : MonoBehaviour {
 	public float m_NoiseFactor = 0.05f;
 
 
-	public float m_MaxDiff = 1.5f;
-	public float m_MinDiff = 0.0f;
+    [Header("Settings Others")]
 
+    [SerializeField]
+    private bool m_GenerateMeshCollider = true;
 
-	public bool m_Quantization = false;
-	public float m_QuantizationSteps = 1.0f;
+    [Header("Mapping")]
+
 
     public Transform m_RootTrees;
     public GameObject m_TreePrefab;
@@ -55,58 +69,25 @@ public class ProceduralSphere : MonoBehaviour {
     public ProceduralSphere m_CoverSphere;
     public bool m_RemoveCoveredTriangles = false;
 
+
+    private MeshCollider m_MeshCollider;
+
 	// Use this for initialization
 	void Start () 
 	{
 		//GenerateSphere(true);
-        GenerateTrees();
+
 	}
 
 	void OnValidate()
 	{
 		GenerateSphere(true);
-	}
+
+    }
 
 
 	
-    void GenerateTrees()
-    {
-        if (m_RootTrees != null)
-        {
-            DestroyImmediate(m_RootTrees.gameObject);
-        }
-        m_RootTrees = (new GameObject("Treeroot")).transform;
-        m_RootTrees.transform.parent = this.transform;
-        int decoLayer = LayerMask.NameToLayer("decoration");
-        m_RootTrees.gameObject.layer = decoLayer;
-        for (int i = 0; i < 500;i++)
-        {
-            GameObject tree = Instantiate(m_TreePrefab,m_RootTrees);
-
-            Vector3 randomPoint = Random.onUnitSphere;
-
-
-            randomPoint.Normalize();
-            randomPoint.x = randomPoint.x / 2.0f;
-            randomPoint.y = randomPoint.y / 2.0f;
-            randomPoint.z = randomPoint.z / 2.0f;
-
-            tree.transform.position = (randomPoint + GetOffsetForPosition(randomPoint)) * this.transform.localScale.x ;
-
-            tree.transform.localScale = Vector3.one;
-
-
-            Vector3 topVector = randomPoint-this.transform.position;
-            topVector.Normalize();
-
-            tree.transform.up = topVector;
-
-        }
-
-        //batch tree static
-        StaticBatchingUtility.Combine(m_RootTrees.gameObject);
-
-    }
+   
 
 
 	public void GenerateSphere(bool _init = false)
@@ -186,6 +167,20 @@ public class ProceduralSphere : MonoBehaviour {
 		m_Normals = m_Mesh.normals;
 
 		GetComponent<MeshFilter>().mesh = m_Mesh;
+
+
+        if(m_GenerateMeshCollider)
+        {
+            m_MeshCollider = this.gameObject.GetComponent<MeshCollider>();
+            if(!m_MeshCollider)
+            {
+                m_MeshCollider = this.gameObject.AddComponent<MeshCollider>();
+            }
+
+            m_MeshCollider.sharedMesh = m_Mesh;
+
+        }
+
     }
 
 	void Quantization()
@@ -311,6 +306,42 @@ public class ProceduralSphere : MonoBehaviour {
         normal.Normalize();
         float nFactor =  noiseF * m_NoiseFactor; 
         return normal *nFactor;
+    }
+
+    private Ray m_CastRay = new Ray();
+    public Vector3 ProjectPointOnToPlanet(Vector3 _point ,out Vector3 _normal, bool _presize = true)
+    {
+        Vector3 result = Vector3.zero;
+        _normal = Vector3.one;
+        _point.Normalize();
+
+
+        if(!_presize || !m_MeshCollider)
+        {
+            _normal = _point;
+
+            return GetDistanceFromUniSphereCenter(_point) *_point * this.transform.localScale.x;
+        }
+        else
+        {
+            m_CastRay.direction = -_point;
+            m_CastRay.origin = (_point * this.transform.localScale.x);
+
+
+            Debug.DrawRay(m_CastRay.origin,m_CastRay.direction*this.transform.localScale.x);
+
+            RaycastHit hitInfo = new RaycastHit();
+            m_MeshCollider.Raycast(m_CastRay, out hitInfo, this.transform.localScale.x);
+
+
+            _normal = hitInfo.normal;
+            result = hitInfo.point;
+        }
+
+
+        return result;
+
+       // collider
     }
 
 
