@@ -48,7 +48,7 @@ public class TouchTracker
 		
 		if(GetTouchBegan())
 		{
-			Debug.Log("Touchbegan");
+
 			m_TouchDidMove = false;
 			m_TouchDidBegin = true;
 			m_TouchBeganTime = Time.realtimeSinceStartup;
@@ -56,7 +56,7 @@ public class TouchTracker
 		}
 		else if(GetTouchEnded())
 		{
-			Debug.Log("GetTouchEnded");
+
 			m_TouchDidMove = false;
 			m_TouchDidBegin = false;
 		}

@@ -7,7 +7,7 @@ public interface I_Service
 
 
 }
-
+//maybe add a service factory which can instantiate services
 public class ServiceLocator : Singleton<ServiceLocator>
 {
 
