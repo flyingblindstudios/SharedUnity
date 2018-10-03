@@ -1,13 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+
+/*
 using Sfs2X;
-using Sfs2X.Core;
+using Sfs2X.Core;*/
 //using Sfs2X.Request;
 
-public class SmartfoxGameServer : GameServer {
+public class SmartfoxGameServer /*: GameServer*/ {
 
-	SmartFox sfs;
+/*	SmartFox sfs;
 	
 	protected override void OnStart()
 	{
@@ -42,5 +45,5 @@ public class SmartfoxGameServer : GameServer {
 			Debug.Log("[SmartFoxServer] Connection established!");
 		}
 
-	}
+	}*/
 }
