@@ -61,11 +61,6 @@ public class ProceduralSphere : MonoBehaviour {
     [Header("Mapping")]
 
 
-    public Transform m_RootTrees;
-    public GameObject m_TreePrefab;
-
-
-
     public ProceduralSphere m_CoverSphere;
     public bool m_RemoveCoveredTriangles = false;
 
@@ -311,27 +306,31 @@ public class ProceduralSphere : MonoBehaviour {
     private Ray m_CastRay = new Ray();
     public Vector3 ProjectPointOnToPlanet(Vector3 _point ,out Vector3 _normal, bool _presize = true)
     {
+        Vector3 planetPos = this.transform.position;
+
+
         Vector3 result = Vector3.zero;
         _normal = Vector3.one;
-        _point.Normalize();
+        //_point.Normalize();
 
+        Vector3 direction = (planetPos - _point).normalized;
 
-        if(!_presize || !m_MeshCollider)
+        if (!_presize || !m_MeshCollider)
         {
             _normal = _point;
 
-            return GetDistanceFromUniSphereCenter(_point) *_point * this.transform.localScale.x;
+            return planetPos + (GetDistanceFromUniSphereCenter(_point) * -direction * this.transform.localScale.x);
         }
         else
         {
-            m_CastRay.direction = -_point;
-            m_CastRay.origin = (_point * this.transform.localScale.x);
+            m_CastRay.direction = direction;
+            m_CastRay.origin = planetPos + (-direction * this.transform.localScale.x);
 
 
-            Debug.DrawRay(m_CastRay.origin,m_CastRay.direction*this.transform.localScale.x);
+            Debug.DrawRay(m_CastRay.origin, m_CastRay.direction*this.transform.localScale.x);
 
             RaycastHit hitInfo = new RaycastHit();
-            m_MeshCollider.Raycast(m_CastRay, out hitInfo, this.transform.localScale.x);
+            m_MeshCollider.Raycast(m_CastRay, out hitInfo, 10000000);
 
 
             _normal = hitInfo.normal;
