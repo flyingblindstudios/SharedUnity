@@ -46,8 +46,8 @@ public class ShowNormalGizmos : MonoBehaviour {
 
 			}
 
-			Gizmos.DrawLine(m_Vertices[i], m_Vertices[i]+m_Normals[i] );
-		}
+			Gizmos.DrawLine(m_Vertices[i]*this.transform.localScale.x, m_Vertices[i] * this.transform.localScale.x + m_Normals[i] );
+        }
 
 
 		

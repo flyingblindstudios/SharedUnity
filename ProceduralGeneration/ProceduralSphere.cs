@@ -6,57 +6,58 @@ using CoherentNoise.Generation.Fractal;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class ProceduralSphere : MonoBehaviour {
-/*   U 
-	LFRB
-	 D
-	*/
-	
-	
-	enum DISTRIBUTION {LINEAR};
+    /*   U 
+        LFRB
+         D
+        */
 
-	public enum METHODE {SEPERATE_SIDES};
 
-	enum FACE {UP, LEFT, FRONT,RIGHT, BACK, DOWN}
-	private Mesh m_Mesh;
-	private Vector3[] m_Vertices;
+    enum DISTRIBUTION { LINEAR };
+
+    public enum METHODE { SEPERATE_SIDES };
+
+    enum FACE { UP, LEFT, FRONT, RIGHT, BACK, DOWN }
+    private Mesh m_Mesh;
+    private Vector3[] m_Vertices;
+    private Color[] m_VertexColors;
     private Vector2[] m_UV;
     private int[] m_TrianglesX;
     private int[] m_TrianglesY;
     private int[] m_TrianglesZ;
-	private Vector3[] m_Normals = null;
-
-	
+    private Vector3[] m_Normals = null;
 
 
 
-	/**************INPUT***************/
+
+
+    /**************INPUT***************/
     [Header("Settings Generation")]
 
-    public int m_SizeX, m_SizeY, m_SizeZ;
+    public int m_Size = 10;
+
+    int m_SizeX, m_SizeY, m_SizeZ;
     public METHODE m_Methode = METHODE.SEPERATE_SIDES;
 
-    public float m_MaxDiff = 1.5f;
-    public float m_MinDiff = 0.0f;
 
-
+    [Header("Settings Quantization")]
     public bool m_Quantization = false;
     public float m_QuantizationSteps = 1.0f;
-	
-    [Header("Settings Random")]
 
+    [Header("Settings Random")]
+    public bool m_RandomNoise = true;
     public int m_Seed = 200;
 
 
-	public float m_NoiseScale = 2.0f;
+    public float m_NoiseScale = 2.0f;
 
 
-	public float m_NoiseFactor = 0.05f;
+    float m_NoiseFactor = 0.55f;
 
 
     [Header("Settings Others")]
 
     [SerializeField]
-    private bool m_GenerateMeshCollider = true;
+    bool m_GenerateMeshCollider = true;
 
     [Header("Mapping")]
 
@@ -65,79 +66,105 @@ public class ProceduralSphere : MonoBehaviour {
     public bool m_RemoveCoveredTriangles = false;
 
 
-    private MeshCollider m_MeshCollider;
+    private MeshCollider m_MeshCollider = null;
 
-	// Use this for initialization
-	void Start () 
-	{
-		//GenerateSphere(true);
 
-	}
+    List<Vector3> landSphereOrigins = new List<Vector3>();
+    List<float> landSphereRadius = new List<float>();
 
-	void OnValidate()
-	{
-		GenerateSphere(true);
+    // Use this for initialization
+    void Start()
+    {
+        //GenerateSphere(true);
+        m_Size = Mathf.Clamp(m_Size, 0, 50);
+        m_SizeX = m_Size;
+        m_SizeY = m_Size;
+        m_SizeZ = m_Size;
+
+    }
+
+    void OnValidate()
+    {
+ 
+        if (m_MeshCollider && Application.isPlaying)
+        {
+            m_MeshCollider.sharedMesh = null;
+            Destroy(m_MeshCollider);
+            m_MeshCollider = null;
+        }
+
+        
+        GenerateSphere(true);
+
 
     }
 
 
-	
-   
 
 
-	public void GenerateSphere(bool _init = false)
-	{
-		
-		if(m_SizeY < 2)
-		{
-			return;
-		}
-		
-		m_Mesh = new Mesh();
-		m_Mesh.name = "Procedural Cube";
 
-		if(_init)
-		{
+
+    public void GenerateSphere(bool _init = false)
+    {
+        m_Size = Mathf.Clamp(m_Size, 0, 50);
+        m_SizeX = m_Size;
+        m_SizeY = m_Size;
+        m_SizeZ = m_Size;
+
+        
+        if (m_Size < 2)
+        {
+            return;
+        }
+        Debug.Log("GenerateSphere");
+        m_Mesh = new Mesh();
+        m_Mesh.name = "Procedural Cube";
+
+        if (_init)
+        {
             int size = CalculateNumberOfVerticies(m_SizeX, m_SizeY, m_SizeZ);
             m_Vertices = new Vector3[size];
             m_UV = new Vector2[size];
-
+            m_VertexColors= new Color[size];
         }
 
 
-		if(METHODE.SEPERATE_SIDES ==  m_Methode)
-		{
-			if(_init)
-			{
-				GenerateWithSeperateSides();
-				CreateTriangles ();
-				
+        if (METHODE.SEPERATE_SIDES == m_Methode)
+        {
+            if (_init)
+            {
+                GenerateWithSeperateSides();
+                CreateTriangles();
+
                 //can not be removed, since we need sperate uv coorinates
                 //RemoveDoubles(); 
-				
+
                 //distribution is needed for making the verticies around the sphere at the end more even
-				MakeDistribution();
-			}
-			
+                MakeDistribution();
+            }
+
             //make every vertice have a distane of 1 from the origin
             MakeUniformSphere();
-			
-            //genereate Noise
-            GenerateNoise();
 
-			if(m_Quantization)
-			{
-				Quantization();
-			}
-		}
+            if (m_RandomNoise)
+            {
+                //genereate Noise
+                GenerateNoise();
+            }
+
+            if (m_Quantization)
+            {
+                Quantization();
+            }
+        }
 
 
-        if(m_RemoveCoveredTriangles && m_CoverSphere != null)
+        if (m_RemoveCoveredTriangles && m_CoverSphere != null)
         {
             RemoveCoveredTriangels();
 
         }
-		
+
 
         //assign mesh
         m_Mesh.vertices = m_Vertices;
@@ -148,45 +175,52 @@ public class ProceduralSphere : MonoBehaviour {
         m_Mesh.SetTriangles(m_TrianglesY, 1);
         m_Mesh.SetTriangles(m_TrianglesX, 2);
 
+        //m_Mesh.colors
+
         m_Mesh.uv = m_UV;
-  
+
+        m_Mesh.colors = m_VertexColors;
+
         //recalculate normals -> Maybe we can do this?
         m_Mesh.RecalculateNormals();
-		
+
         //avarages the normals on seem positions
-        MakeNormalsSeemless ();
-		
+        MakeNormalsSeemless();
+
         //we need to reacalculate the tangens after assigning the normals
         m_Mesh.RecalculateTangents();
-        
-		m_Normals = m_Mesh.normals;
 
-		GetComponent<MeshFilter>().mesh = m_Mesh;
+        m_Normals = m_Mesh.normals;
+
+        GetComponent<MeshFilter>().mesh = m_Mesh;
 
 
-        if(m_GenerateMeshCollider)
+        if (m_GenerateMeshCollider && Application.isPlaying)
         {
+            Debug.Log("checking mesh collider");
             m_MeshCollider = this.gameObject.GetComponent<MeshCollider>();
-            if(!m_MeshCollider)
+            if (m_MeshCollider == null)
             {
+                Debug.Log("adding mesh collider");
                 m_MeshCollider = this.gameObject.AddComponent<MeshCollider>();
             }
-
+            
             m_MeshCollider.sharedMesh = m_Mesh;
 
         }
 
+
     }
 
-	void Quantization()
-	{
-		
-		for (int i = 0; i < m_Vertices.Length; i++) 
-		{
-            m_Vertices[i] = QuantizateVector(m_Vertices[i]);
-		}
+    void Quantization()
+    {
 
-	}
+        for (int i = 0; i < m_Vertices.Length; i++)
+        {
+            m_Vertices[i] = QuantizateVector(m_Vertices[i]);
+        }
+
+    }
 
     Vector3 QuantizateVector(Vector3 _vec)
     {
@@ -200,23 +234,23 @@ public class ProceduralSphere : MonoBehaviour {
     {
         List<int> m_Triangles = new List<int>();
 
-        for(int i = 0; i < m_TrianglesX.Length;i+=3)
+        for (int i = 0; i < m_TrianglesX.Length; i += 3)
         {
             Vector3 one = m_Vertices[m_TrianglesX[i]];
-            Vector3 two = m_Vertices[m_TrianglesX[i+1]];
-            Vector3 three = m_Vertices[m_TrianglesX[i+2]];
+            Vector3 two = m_Vertices[m_TrianglesX[i + 1]];
+            Vector3 three = m_Vertices[m_TrianglesX[i + 2]];
 
             float d1 = m_CoverSphere.GetDistanceFromUniSphereCenter(one);
             float d2 = m_CoverSphere.GetDistanceFromUniSphereCenter(two);
             float d3 = m_CoverSphere.GetDistanceFromUniSphereCenter(three);
-            float mag1 = one.magnitude*transform.localScale.x;
-            float mag2 = two.magnitude* transform.localScale.x;
-            float mag3 = three.magnitude* transform.localScale.x;
-            if(d1 < mag1 || d2 < mag2 || d3 < mag3 )
+            float mag1 = one.magnitude * transform.localScale.x;
+            float mag2 = two.magnitude * transform.localScale.x;
+            float mag3 = three.magnitude * transform.localScale.x;
+            if (d1 < mag1 || d2 < mag2 || d3 < mag3)
             {
                 m_Triangles.Add(m_TrianglesX[i]);
-                m_Triangles.Add(m_TrianglesX[i+1]);
-                m_Triangles.Add(m_TrianglesX[i+2]);
+                m_Triangles.Add(m_TrianglesX[i + 1]);
+                m_Triangles.Add(m_TrianglesX[i + 2]);
             }
 
         }
@@ -234,9 +268,9 @@ public class ProceduralSphere : MonoBehaviour {
             float d1 = m_CoverSphere.GetDistanceFromUniSphereCenter(one);
             float d2 = m_CoverSphere.GetDistanceFromUniSphereCenter(two);
             float d3 = m_CoverSphere.GetDistanceFromUniSphereCenter(three);
-            float mag1 = one.magnitude* transform.localScale.x;
-            float mag2 = two.magnitude* transform.localScale.x;
-            float mag3 = three.magnitude* transform.localScale.x;
+            float mag1 = one.magnitude * transform.localScale.x;
+            float mag2 = two.magnitude * transform.localScale.x;
+            float mag3 = three.magnitude * transform.localScale.x;
             if (d1 < mag1 || d2 < mag2 || d3 < mag3)
             {
                 m_Triangles.Add(m_TrianglesY[i]);
@@ -259,9 +293,9 @@ public class ProceduralSphere : MonoBehaviour {
             float d1 = m_CoverSphere.GetDistanceFromUniSphereCenter(one);
             float d2 = m_CoverSphere.GetDistanceFromUniSphereCenter(two);
             float d3 = m_CoverSphere.GetDistanceFromUniSphereCenter(three);
-            float mag1 = one.magnitude* transform.localScale.x;
-            float mag2 = two.magnitude* transform.localScale.x;
-            float mag3 = three.magnitude* transform.localScale.x;
+            float mag1 = one.magnitude * transform.localScale.x;
+            float mag2 = two.magnitude * transform.localScale.x;
+            float mag3 = three.magnitude * transform.localScale.x;
             if (d1 < mag1 || d2 < mag2 || d3 < mag3)
             {
                 m_Triangles.Add(m_TrianglesZ[i]);
@@ -278,29 +312,70 @@ public class ProceduralSphere : MonoBehaviour {
     public float GetDistanceFromUniSphereCenter(Vector3 _point)
     {
         _point.Normalize();
-        _point.x = _point.x/2.0f;
-        _point.y = _point.y/2.0f;
-        _point.z = _point.z/2.0f;
+        _point.x = _point.x / 2.0f;
+        _point.y = _point.y / 2.0f;
+        _point.z = _point.z / 2.0f;
 
 
         //todo needs to take quantization into account
-        return (_point + GetOffsetForPosition(_point)).magnitude* transform.localScale.x;
+        return (_point + GetNoiseOffsetForPosition(_point)).magnitude * transform.localScale.x;
 
     }
 
-    Vector3 GetOffsetForPosition(Vector3 square)
+    public static float GetPerlinNoise(float _x, float _y, float _z)
     {
-        //dont do this, init it only once!
-        GradientNoise gnoise = new GradientNoise(m_Seed);
-        //noise scale is for how fine graded the noise is.
-        //we need a combination between fine and rough noise
-        float noiseF = gnoise.GetValue(square.y * m_NoiseScale,square.x*m_NoiseScale,square.z*m_NoiseScale);
-    
+        float XY = Mathf.PerlinNoise(_x, _y);
+        float XZ = Mathf.PerlinNoise(_x, _z);
+        float YZ = Mathf.PerlinNoise(_y, _z);
+
+        float YX = Mathf.PerlinNoise(_y, _x);
+        float ZX = Mathf.PerlinNoise(_z, _x);
+        float ZY = Mathf.PerlinNoise(_z, _y);
+
+        float XYZ = XY + XZ + YZ + YX + ZX + ZY;
+
+        return XYZ / 6.0f;
+    }
+  
+    Vector3 GetNoiseOffsetForPosition(Vector3 square)
+    {
+        square.Normalize();
+        float noiseF = GetNoiseValue(square);
+
+
         //normal of the vertex
         Vector3 normal =  square - this.transform.position;
         normal.Normalize();
         float nFactor =  noiseF * m_NoiseFactor; 
         return normal *nFactor;
+    }
+
+    public enum NOISE { GRADIENT, SIMPLEX, PERLIN, FAKE_PLANET, RANDOM_CIRCLES }
+    public NOISE m_Noise = NOISE.GRADIENT;
+    float GetNoiseValue(Vector3 square)
+    {
+        float noiseF = 0.0f;
+
+        switch (m_Noise)
+        {
+            case NOISE.GRADIENT:
+                //dont do this, init it only once!
+                GradientNoise gnoise = new GradientNoise(m_Seed);
+                //noise scale is for how fine graded the noise is.
+                //we need a combination between fine and rough noise
+                noiseF = gnoise.GetValue(square.y * m_NoiseScale, square.x * m_NoiseScale, square.z * m_NoiseScale);
+                break;
+            case NOISE.SIMPLEX:
+
+                noiseF = ((float)Simplex.Noise.CalcPixel3D((int)(square.x * m_NoiseScale), (int)(square.y * m_NoiseScale), (int)(square.z * m_NoiseScale), 1.0f)*(1.0f/256.0f)-0.5f)*2.0f;
+                break;
+            case NOISE.PERLIN:
+                noiseF = noiseF = GetPerlinNoise(square.x * m_NoiseScale, square.y * m_NoiseScale, square.z * m_NoiseScale);
+                break;
+        }
+
+        
+        return noiseF;
     }
 
     private Ray m_CastRay = new Ray();
@@ -324,10 +399,10 @@ public class ProceduralSphere : MonoBehaviour {
         else
         {
             m_CastRay.direction = direction;
-            m_CastRay.origin = planetPos + (-direction * this.transform.localScale.x);
+            m_CastRay.origin = planetPos + (-direction * this.transform.localScale.x*2.0f);
 
 
-            Debug.DrawRay(m_CastRay.origin, m_CastRay.direction*this.transform.localScale.x);
+            Debug.DrawRay(m_CastRay.origin, m_CastRay.direction*this.transform.localScale.x*2.0f);
 
             RaycastHit hitInfo = new RaycastHit();
             m_MeshCollider.Raycast(m_CastRay, out hitInfo, 10000000);
@@ -346,26 +421,133 @@ public class ProceduralSphere : MonoBehaviour {
 
 	void GenerateNoise()
 	{
-		//Persistence
-		//PinkNoise noise = new PinkNoise(m_Seed);//new GradientNoise(200);
-		
-        //seems to be more smooth then pink noise
+        if (m_Noise == NOISE.RANDOM_CIRCLES)
+        {
+            FakePlanetRandomCircles(FakePlanetIterations);
+        }
+        else if (m_Noise != NOISE.FAKE_PLANET)
+        {
+            //Persistence
+            //PinkNoise noise = new PinkNoise(m_Seed);//new GradientNoise(200);
 
-		float scale = m_NoiseScale;
-        float factor = m_NoiseFactor;///this.transform.localScale.x;
-		Vector3 offset = new Vector3(0.5f,0.5f,0.5f);
-		for (int i = 0; i < m_Vertices.Length; i++) 
-		{
-			Vector3 square = m_Vertices[i];//+offset;
+            //seems to be more smooth then pink noise
 
-            m_Vertices[i] = m_Vertices[i] + GetOffsetForPosition(square);
-
-
-
-		}
+            float scale = m_NoiseScale;
+            float factor = m_NoiseFactor;///this.transform.localScale.x;
+            //	Vector3 offset = new Vector3(0.5f,0.5f,0.5f);
+            for (int i = 0; i < m_Vertices.Length; i++)
+            {
+                Vector3 square = m_Vertices[i];
 
 
-	}
+
+                m_Vertices[i] = m_Vertices[i] + GetNoiseOffsetForPosition(square);
+
+                float value = GetNoiseValue(square);
+                value = (value + 1.0f) / 2.0f;
+                //m_VertexColors[i] = new Color(value, value, value, 1.0f);
+
+            }
+        }
+        else
+        {
+            FakePlanetNoise(FakePlanetIterations);
+        }
+
+    }
+    public int FakePlanetIterations = 50;
+
+    void FakePlanetNoise(int iterations = 100)
+    {
+        float weight =( 1.0f / (float)iterations)*2.0f;
+        
+        for (int i = 0; i < iterations; i++)
+        {
+            float stepWeight = 1.0f / ((float)i+1.0f);
+            Vector3 randomDirection = Random.onUnitSphere;
+            randomDirection.Normalize();
+            for (int v = 0; v < m_Vertices.Length; v++)
+            {
+               
+                Vector3 normal = m_Vertices[v];
+                normal.Normalize();
+                int sign = 1;
+                if (Vector3.Dot(randomDirection, normal) < 0.0f)
+                {
+                    sign = -1;
+                }
+
+
+                m_Vertices[v] = m_Vertices[v] + normal * sign * m_NoiseFactor* weight;
+
+             
+                m_VertexColors[v] = new Color(sign * weight + m_VertexColors[v].r, sign  * weight + m_VertexColors[v].g, sign  * weight + m_VertexColors[v].b, 1.0f);
+
+            }
+
+        }
+    }
+
+    void FakePlanetRandomCircles(int nCirceles  = 100)
+    {
+        m_Noise = NOISE.GRADIENT;
+        m_NoiseFactor = 0.04f;
+        GenerateNoise();
+        m_NoiseFactor = 0.55f;
+
+        m_Noise = NOISE.RANDOM_CIRCLES;
+
+        Random.InitState(m_Seed);
+        for (int i = 0; i < nCirceles; i++)
+        {
+            Vector3 circleOrigin = Random.onUnitSphere;
+            circleOrigin.Normalize();
+            float circleRadius = Random.Range(0.1f, 0.5f);
+
+            landSphereOrigins.Add(circleOrigin);
+            landSphereRadius.Add(circleRadius);
+            for (int v = 0; v < m_Vertices.Length; v++)
+            {
+
+                Vector3 normal = m_Vertices[v];
+                normal.Normalize();
+
+                float distance = Vector3.Distance(normal, circleOrigin);
+               // Debug.Log(distance);
+                if (distance > circleRadius)
+                {
+                    //m_VertexColors[v] = new Color(0, 0,0, 1.0f);
+                    continue;
+                }
+
+               
+
+
+
+                m_Vertices[v] = /*m_Vertices[v] +*/ normal * m_NoiseFactor;// * m_NoiseFactor * weight;
+
+
+                m_VertexColors[v] = new Color(1,1, 1, 1.0f);
+
+            }
+
+
+        }
+    }
+
+    public bool IsPointInLandSphere(Vector3 _point)
+    {
+        Vector3 direction = (_point - this.transform.position).normalized;
+
+        for (int i = 0; i < landSphereOrigins.Count; i++)
+        {
+            if (Vector3.Distance(direction, landSphereOrigins[i]) < landSphereRadius[i]*0.9f)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
 	void GenerateWithSeperateSides()
 	{
@@ -737,7 +919,12 @@ public class ProceduralSphere : MonoBehaviour {
 
 	private void OnDrawGizmos () {
 		
-		
+		for(int i = 0; i < landSphereOrigins.Count; i++)
+        {
+            Gizmos.DrawWireSphere(landSphereOrigins[i]*this.transform.localScale.x*0.5f + this.transform.position, landSphereRadius[i] * this.transform.localScale.x * 0.5f);
+        }
+
+
 		return;
 		if (m_Vertices == null) {
 			return;
