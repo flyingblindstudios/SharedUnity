@@ -541,7 +541,7 @@ public class ProceduralSphere : MonoBehaviour {
 
         for (int i = 0; i < landSphereOrigins.Count; i++)
         {
-            if (Vector3.Distance(direction, landSphereOrigins[i]) < landSphereRadius[i]*0.9f)
+            if (Vector3.Distance(direction, landSphereOrigins[i]) < landSphereRadius[i]*0.8f)
             {
                 return true;
             }
