@@ -24,6 +24,9 @@ public class ProceduralSphere : MonoBehaviour {
     private int[] m_TrianglesX;
     private int[] m_TrianglesY;
     private int[] m_TrianglesZ;
+    private int[] m_TrianglesX_I;
+    private int[] m_TrianglesY_I;
+    private int[] m_TrianglesZ_I;
     private Vector3[] m_Normals = null;
 
 
@@ -170,10 +173,13 @@ public class ProceduralSphere : MonoBehaviour {
         m_Mesh.vertices = m_Vertices;
         //m_Mesh.triangles = m_Triangles;
 
-        m_Mesh.subMeshCount = 3;
-        m_Mesh.SetTriangles(m_TrianglesZ, 0);
-        m_Mesh.SetTriangles(m_TrianglesY, 1);
-        m_Mesh.SetTriangles(m_TrianglesX, 2);
+        m_Mesh.subMeshCount = 6;
+        m_Mesh.SetTriangles(m_TrianglesZ, 0); //BACK
+        m_Mesh.SetTriangles(m_TrianglesY, 1); //Bottom
+        m_Mesh.SetTriangles(m_TrianglesX, 2); //LEFT
+        m_Mesh.SetTriangles(m_TrianglesZ_I, 3); //FORWARD
+        m_Mesh.SetTriangles(m_TrianglesY_I, 4); //TOP
+        m_Mesh.SetTriangles(m_TrianglesX_I, 5); //RIGHT
 
         //m_Mesh.colors
 
@@ -769,19 +775,23 @@ public class ProceduralSphere : MonoBehaviour {
 
 
 	private void CreateTriangles () {
-		int quads = ((m_SizeX-1) * (m_SizeZ-1)*2) + ((m_SizeX-1) * (m_SizeY-1))*2 + ((m_SizeZ-1) * (m_SizeY-1))*2;//(m_SizeX * m_SizeY + m_SizeX * m_SizeZ + m_SizeY * m_SizeZ) * 2;
+        int quads = ((m_SizeX-1) * (m_SizeZ-1)*2) + ((m_SizeX-1) * (m_SizeY-1))*2 + ((m_SizeZ-1) * (m_SizeY-1))*2;//(m_SizeX * m_SizeY + m_SizeX * m_SizeZ + m_SizeY * m_SizeZ) * 2;
+        //int quads = (m_SizeX) * (m_SizeZ);
+        m_TrianglesX = new int[quads]; //LEFT 
+        m_TrianglesY = new int[quads]; //BOTTOM
+        m_TrianglesZ = new int[quads]; //BACK
 
-        m_TrianglesX = new int[quads * 2];
-        m_TrianglesY = new int[quads * 2];
-        m_TrianglesZ = new int[quads * 2];
-
+        m_TrianglesX_I = new int[quads]; //RIGHT
+        m_TrianglesY_I = new int[quads]; //TOP
+        m_TrianglesZ_I = new int[quads]; //FORWARD
+        Debug.Log("Number of quads " + quads);
 		
 		int index = 0;
 		int offset = 0;
 		
 
 
-        //Y
+        //BOTTOM
         for(int x = 0; x < m_SizeX-1; x++ )
 		{
 			for(int z = 0; z < m_SizeZ-1; z++ )
@@ -789,21 +799,22 @@ public class ProceduralSphere : MonoBehaviour {
                 index = SetQuad(m_TrianglesY,index,x*m_SizeX + z, x*m_SizeX +  z+1,(x+1)*m_SizeX +z  , (x+1)*m_SizeX +z+1);
 			}
 		}
-      
+        Debug.Log("index " + index);
 		offset = (m_SizeX) * (m_SizeZ);
-
+        index = 0;
+        //TOP
         for (int x = 0; x < m_SizeX - 1; x++)
         {
             for (int z = 0; z < m_SizeZ - 1; z++)
             {
-                index = SetQuad(m_TrianglesY,index, offset+ x*m_SizeX +  z+1, offset+  x*m_SizeX + z, offset+   (x+1)*m_SizeX +z+1, offset+ (x+1)*m_SizeX +z);
+                index = SetQuad(m_TrianglesY_I,index, offset+ x*m_SizeX +  z+1, offset+  x*m_SizeX + z, offset+   (x+1)*m_SizeX +z+1, offset+ (x+1)*m_SizeX +z);
 			}
 		}
      
         offset += (m_SizeX) * (m_SizeZ);
         //offset = 0;
         index = 0;
-        //Z
+        //BACK
 		for(int x = 0; x < m_SizeX-1; x++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
@@ -815,19 +826,20 @@ public class ProceduralSphere : MonoBehaviour {
 
 
 		offset += (m_SizeX) * (m_SizeY);
-		
+        index = 0;
+        //FORWARD
 		for(int x = 0; x < m_SizeX-1; x++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
 			{
-                index = SetQuad(m_TrianglesZ,index, offset+ x*m_SizeX + y, offset+ x*m_SizeX +  y+1, offset+ (x+1)*m_SizeX +y  , offset+ (x+1)*m_SizeX +y+1);
+                index = SetQuad(m_TrianglesZ_I,index, offset+ x*m_SizeX + y, offset+ x*m_SizeX +  y+1, offset+ (x+1)*m_SizeX +y  , offset+ (x+1)*m_SizeX +y+1);
 			}
 
 		}
 		offset += (m_SizeX) * (m_SizeY);
         //offset = 0;
         index = 0;
-
+        //RIGHT
 		for(int z = 0; z < m_SizeZ-1; z++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
@@ -837,12 +849,14 @@ public class ProceduralSphere : MonoBehaviour {
 		}
 
 		offset += (m_SizeZ) * (m_SizeY);
-     
+        index = 0;
+
+        //LEFT
 		for(int z = 0; z < m_SizeZ-1; z++ )
 		{
 			for(int y = 0; y < m_SizeY-1; y++ )
 			{
-                index = SetQuad(m_TrianglesX,index, offset+ z*m_SizeX +  y+1, offset+ z*m_SizeX + y, offset+ (z+1)*m_SizeX +y+1, offset+ (z+1)*m_SizeX +y   );
+                index = SetQuad(m_TrianglesX_I,index, offset+ z*m_SizeX +  y+1, offset+ z*m_SizeX + y, offset+ (z+1)*m_SizeX +y+1, offset+ (z+1)*m_SizeX +y   );
 			}
 
 		}
