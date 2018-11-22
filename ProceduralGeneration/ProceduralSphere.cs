@@ -499,7 +499,7 @@ public class ProceduralSphere : MonoBehaviour {
         m_Noise = NOISE.GRADIENT;
         m_NoiseFactor = 0.04f;
         GenerateNoise();
-        m_NoiseFactor = 0.55f;
+        m_NoiseFactor = 0.54f;
 
         m_Noise = NOISE.RANDOM_CIRCLES;
 
