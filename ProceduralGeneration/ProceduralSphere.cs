@@ -884,9 +884,9 @@ public class ProceduralSphere : MonoBehaviour {
 			Vector3 square = m_Vertices[i];
 			
 			//change distribution, so that the resulting sphere is more uniform!
-			m_Vertices[i].x = square.x * Mathf.Sqrt(1f - square.y * square.y * 0.5f - square.z * square.z * 0.5f - square.y * square.y * square.z * square.z * 1.0f/3.0f );
-			m_Vertices[i].y = square.y * Mathf.Sqrt(1f - square.x * square.x * 0.5f - square.z * square.z * 0.5f - square.x * square.x * square.z * square.z * 1.0f/3.0f  );
-			m_Vertices[i].z = square.z * Mathf.Sqrt(1f - square.y * square.y * 0.5f - square.x * square.x * 0.5f - square.y * square.y * square.x * square.x * 1.0f/3.0f  );
+			//m_Vertices[i].x = square.x * Mathf.Sqrt(1f - square.y * square.y * 0.5f - square.z * square.z * 0.5f - square.y * square.y * square.z * square.z * 1.0f/3.0f );
+			//m_Vertices[i].y = square.y * Mathf.Sqrt(1f - square.x * square.x * 0.5f - square.z * square.z * 0.5f - square.x * square.x * square.z * square.z * 1.0f/3.0f  );
+			//m_Vertices[i].z = square.z * Mathf.Sqrt(1f - square.y * square.y * 0.5f - square.x * square.x * 0.5f - square.y * square.y * square.x * square.x * 1.0f/3.0f  );
 		
 			//m_Vertices[i].z = m_Vertices[i].y * Mathf.Sqrt(1f - m_Vertices[i].x * m_Vertices[i].x * 0.5f);
 
