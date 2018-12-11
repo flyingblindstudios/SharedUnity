@@ -119,7 +119,7 @@ public class ProceduralSphere : MonoBehaviour {
         {
             return;
         }
-        Debug.Log("GenerateSphere");
+        //Debug.Log("GenerateSphere");
         m_Mesh = new Mesh();
         m_Mesh.name = "Procedural Cube";
 
@@ -526,14 +526,14 @@ public class ProceduralSphere : MonoBehaviour {
                     continue;
                 }
 
+                float diff = Mathf.Clamp(circleRadius - distance,0.0f,1.0f)*1.0f;
                
-
 
 
                 m_Vertices[v] = /*m_Vertices[v] +*/ normal * m_NoiseFactor;// * m_NoiseFactor * weight;
 
-
-                m_VertexColors[v] = new Color(1,1, 1, 1.0f);
+                //red channel is for player area, green just for coloring
+                m_VertexColors[v] = m_VertexColors[v] + new Color(1 * diff, 1 , 1, 1.0f);
 
             }
 
@@ -784,7 +784,7 @@ public class ProceduralSphere : MonoBehaviour {
         m_TrianglesX_I = new int[quads]; //RIGHT
         m_TrianglesY_I = new int[quads]; //TOP
         m_TrianglesZ_I = new int[quads]; //FORWARD
-        Debug.Log("Number of quads " + quads);
+        //Debug.Log("Number of quads " + quads);
 		
 		int index = 0;
 		int offset = 0;
@@ -799,7 +799,7 @@ public class ProceduralSphere : MonoBehaviour {
                 index = SetQuad(m_TrianglesY,index,x*m_SizeX + z, x*m_SizeX +  z+1,(x+1)*m_SizeX +z  , (x+1)*m_SizeX +z+1);
 			}
 		}
-        Debug.Log("index " + index);
+        //Debug.Log("index " + index);
 		offset = (m_SizeX) * (m_SizeZ);
         index = 0;
         //TOP
