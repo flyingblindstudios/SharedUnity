@@ -527,13 +527,12 @@ public class ProceduralSphere : MonoBehaviour {
                 }
 
                 float diff = Mathf.Clamp(circleRadius - distance,0.0f,1.0f)*1.0f;
-               
 
-
-                m_Vertices[v] = /*m_Vertices[v] +*/ normal * m_NoiseFactor;// * m_NoiseFactor * weight;
+            
+                m_Vertices[v] = /*m_Vertices[v] +*/ normal * m_NoiseFactor ;// * m_NoiseFactor * weight;
 
                 //red channel is for player area, green just for coloring
-                m_VertexColors[v] = m_VertexColors[v] + new Color(1 * diff, 1 , 1, 1.0f);
+                m_VertexColors[v] = m_VertexColors[v] + new Color(/*1 * diff*/ 0, 1 , 1, 1.0f);
 
             }
 
