@@ -137,6 +137,7 @@ public class Voxelizer : MonoBehaviour
 
 
         m_Extent = maxExtent - m_Center;
+
         return returnBounds;
     }
 

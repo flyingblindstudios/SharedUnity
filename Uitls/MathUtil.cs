@@ -30,4 +30,10 @@ public class MathUtil
 
         return false;
     }
+
+    public static float SphericalDistance(Vector3 p1, Vector3 p2)
+    {
+        return Mathf.Acos(Vector3.Dot(p1, p2));
+    }
+
 }
