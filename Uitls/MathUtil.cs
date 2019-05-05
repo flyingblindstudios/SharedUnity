@@ -36,4 +36,50 @@ public class MathUtil
         return Mathf.Acos(Vector3.Dot(p1, p2));
     }
 
+
+    public static bool GetLinePlaneIntersection( Vector3 _LineStart, Vector3 _LineEnd, Vector3 _planeOrigin, Vector3 _PlaneNormal, out Vector3 _result)
+    {
+        _result = Vector3.zero;
+        float t = Vector3.Dot(_PlaneNormal, (_planeOrigin - _LineStart)) / Vector3.Dot(_PlaneNormal,_LineEnd);
+
+        if (t >= 0.0f && t <= 1.0f)
+        {
+
+            _result = _LineStart + _LineEnd * t;
+            return true;
+        }
+
+        //intersection when result is between or equal 0-1 and if infinite ray is equal or bigger 0
+
+        return false;
+    }
+
+    public static bool GetRayPlaneIntersection(Vector3 _RayOrigin, Vector3 _RayDirection, Vector3 _planeOrigin, Vector3 _PlaneNormal, out Vector3 _result)
+    {
+        _RayDirection.Normalize();
+
+        _result = Vector3.zero;
+        float t = Vector3.Dot(_PlaneNormal, (_planeOrigin - _RayOrigin)) / Vector3.Dot(_PlaneNormal, _RayDirection);
+
+        if (t >= 0.0f)
+        {
+
+            _result = _RayOrigin + _RayDirection * t;
+            return true;
+        }
+
+        //intersection when result is between or equal 0-1 and if infinite ray is equal or bigger 0
+
+        return false;
+    }
+
+    public static Vector3 FlattenVector(Vector3 _vector)
+    {
+        Vector3 forward2d = _vector;
+        forward2d.y = 0.0f;
+        forward2d.Normalize();
+
+        return forward2d;
+    }
+
 }
