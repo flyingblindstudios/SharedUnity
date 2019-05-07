@@ -8,9 +8,6 @@ namespace Shared
         [SerializeField]
         Shared.GridGenerator2D m_Grid;
 
-        [SerializeField]
-        Transform m_Indicator;
-
         Vector3 m_Position;
 
         [SerializeField]
@@ -19,11 +16,7 @@ namespace Shared
         // Start is called before the first frame update
         void Start()
         {
-            if (m_Indicator != null)
-            {
-                float s = m_Grid.GetTileSize();
-                m_Indicator.transform.localScale = new Vector3(s, s, s);
-            }
+            
 
             m_Position = this.transform.position;
 

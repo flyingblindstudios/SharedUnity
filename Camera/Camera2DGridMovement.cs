@@ -128,12 +128,25 @@ namespace Shared
 
         void CheckForZooming()
         {
+            Vector3 hitResult;
+
+            bool hitGrid = m_Grid.RaycastGrid(m_PositionOnGridRay, out hitResult);
+
             float zoomdiff = m_ZoomInputValue.RuntimeValue;
             m_AccZoom += zoomdiff;
             if (Mathf.Abs(m_AccZoom) > 0.1f)
             {
                 this.transform.position += m_ZoomSpeed * this.transform.forward * Time.deltaTime * m_AccZoom;
             }
+
+
+            //clamp zoom factor
+            Vector3 GroundDirection = this.transform.position - hitResult;
+            float groundDistance = GroundDirection.magnitude;
+            groundDistance = Mathf.Clamp(groundDistance, m_ZoomMin, m_ZoomMax);
+            GroundDirection.Normalize();
+            this.transform.position = hitResult + GroundDirection * groundDistance;
+
 
             m_AccZoom = Mathf.Lerp(m_AccZoom, 0.0f, Time.deltaTime * m_ZoomSpeed);
         }

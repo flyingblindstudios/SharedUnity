@@ -8,7 +8,9 @@ namespace Shared.UI
         [SerializeField]
         Shared.Event.GameEvent m_OnClick;
 
-        public void OnPointerClick(PointerEventData pointerEventData)
+
+
+        public virtual void OnPointerClick(PointerEventData pointerEventData)
         {
             if (m_OnClick != null)
             {
