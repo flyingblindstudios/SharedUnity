@@ -106,19 +106,25 @@ namespace Shared
 
             Vector3 movement = inputDiff.y * forward2d * m_MoveSpeedY + inputDiff.x * right2d * m_MoveSpeedX;
 
-            //check if position still looks on to grid!
+           
             this.transform.position -= movement * Time.deltaTime;
 
-            if(m_LimitToGrid)
+            //check if position still looks on to grid!
+            if (m_LimitToGrid)
             {
                 Vector3 hitResult;
+
+                m_PositionOnGridRay.origin = this.transform.position;
+
                 bool hitGrid = m_Grid.RaycastGrid(m_PositionOnGridRay, out hitResult);
 
                 Vector3 clampHit = m_Grid.ClampToGridArea(hitResult);
-
+                    
                 Vector3 clampPosDiff = clampHit - hitResult;
 
-                this.transform.position += clampPosDiff;
+                this.transform.position = Vector3.Lerp(this.transform.position, this.transform.position+clampPosDiff, Time.deltaTime* clampPosDiff.magnitude);
+
+                m_PositionOnGridRay.origin = this.transform.position;
             }
         }
 
@@ -173,10 +179,10 @@ namespace Shared
             
             bool hitGrid = m_Grid.RaycastGrid(m_PositionOnGridRay, out hitResult);
 
-            if (!hitGrid)
+            /*if (!hitGrid)
             {
                 return;
-            }
+            }*/
 
 
             Vector3 diff = UnityEngine.Input.mousePosition - m_LastMousePosition;
