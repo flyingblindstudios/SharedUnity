@@ -1,9 +1,29 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.Events;
 namespace Shared.Event
-{ 
+{
+
+    /*public interface I_GameEvent
+    {
+        void Raise();
+    }
+
+    public class GameEventUnityEvent : MonoBehaviour, I_GameEvent
+    {
+        [SerializeField]
+        UnityEvent m_UnityEvent;
+
+        public void Raise()
+        {
+            if (m_UnityEvent != null)
+            {
+                m_UnityEvent.Invoke();
+            }
+        }
+    }*/
+
     [CreateAssetMenu(menuName = "Shared/Event/GameEvent")]
     public class GameEvent : ScriptableObject
     {

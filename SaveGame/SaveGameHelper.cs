@@ -83,6 +83,47 @@ namespace Shared.SaveGame
 
         }
 
+        public static void AddValue(string _name, Vector3 _value, Stream _stream)
+        {
+            // _stream.Write
+
+            if (Mode == MODE.BINARY)
+            {
+                AddValue("x", _value.x, _stream);
+                AddValue("y", _value.y, _stream);
+                AddValue("z", _value.z, _stream);
+            }
+
+        }
+
+        public static void AddValue(string _name, Vector2Int _value, Stream _stream)
+        {
+            // _stream.Write
+
+            if (Mode == MODE.BINARY)
+            {
+                AddValue("x", _value.x, _stream);
+                AddValue("y", _value.y, _stream);
+            }
+
+        }
+
+        public static Vector3 GetVector3(Stream _stream)
+        {
+            Vector3 vector = Vector3.zero;
+            vector.x = GetFloat(_stream);
+            vector.y = GetFloat(_stream);
+            vector.z = GetFloat(_stream);
+            return vector;
+        }
+
+        public static Vector2Int GetVector2Int(Stream _stream)
+        {
+            Vector2Int vector = Vector2Int.zero;
+            vector.x = GetInt(_stream);
+            vector.y = GetInt(_stream);
+            return vector;
+        }
 
         public static float GetFloat( Stream _stream )
         {
