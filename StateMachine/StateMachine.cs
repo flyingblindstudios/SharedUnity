@@ -67,12 +67,12 @@ public class StateMachine : StateMachineState
 
     public override void OnStateEnter()
     {
-
+        m_CurrentStateIndex = -1;
     }
 
     public override void OnStateExit()
     {
-
+        m_CurrentStateIndex = -1;
     }
 
     public override bool IsDone()

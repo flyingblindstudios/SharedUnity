@@ -24,9 +24,9 @@ public class ServiceLocator : Singleton<ServiceLocator>
             m_Callback = _del;
             m_KeepUpdated = _keepUpdated;
         }
-     }
+    }
 
-    public delegate void ServiceReady_delegate( I_Service _service); 
+    public delegate void ServiceReady_delegate(I_Service _service);
 
 
     Dictionary<System.Type, I_Service> m_Services = new Dictionary<System.Type, I_Service>();
@@ -40,21 +40,31 @@ public class ServiceLocator : Singleton<ServiceLocator>
         //if already there assign
     }
 
-    public void RegisterService(I_Service _service)
+    public void UnregisterService(I_Service _service)
+    {
+        m_Services.Remove(_service.GetType());
+    }
+
+    public void RegisterServiceAsType(I_Service _service, System.Type _type)
     {
 
 
-        if(m_Services.ContainsKey(_service.GetType()))
+        if (m_Services.ContainsKey(_type))
         {
             Debug.LogError("More then one of the same service tries to register itself");
 
         }
 
-        Debug.Log("[ServiceLocator] Registerd Service " + _service.GetType().Name);
+        Debug.Log("[ServiceLocator] Registerd Service " + _type.Name);
 
-        m_Services[_service.GetType()] = _service;
+        m_Services[_type] = _service;
 
-        CheckServiceReadyQueue(_service.GetType(),_service);
+        CheckServiceReadyQueue(_type, _service);
+    }
+
+    public void RegisterService(I_Service _service)
+    {
+        RegisterServiceAsType(_service, _service.GetType());
     }
 
     void CheckServiceReadyQueue(System.Type _type, I_Service _service)
@@ -94,4 +104,10 @@ public class ServiceLocator : Singleton<ServiceLocator>
     {
         return m_Services[_type];
     }
+
+    public T RequestService<T>() where T: I_Service 
+    {
+        return (T)m_Services[typeof(T)];
+    }
+
 }
