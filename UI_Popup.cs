@@ -27,7 +27,6 @@ public class UI_Popup : MonoBehaviour, Popup
     {
         ServiceLocator.GetInstance().RegisterServiceAsType(this, typeof(Popup));
         m_PopupContent.SetActive(false);
-        Debug.Log("Test!!!!");
     }
 
     void OnDestroy()

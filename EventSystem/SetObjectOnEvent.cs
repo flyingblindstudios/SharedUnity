@@ -17,6 +17,11 @@ namespace Shared.Event
 
         public override void OnEventRaised(GameEvent _event)
         {
+            SetObject();
+        }
+
+        public void SetObject()
+        {
             m_Object.SetActive(m_ToState);
 
             if (m_Toogle)

@@ -4,7 +4,7 @@ using UnityEngine.Events;
 namespace Shared.Event
 {
 
-    [CreateAssetMenu(menuName = "Shared/Event/GameEventListener")]
+    //[CreateAssetMenu(menuName = "Shared/Event/GameEventListener")]
     public class GameEventListener : GameEventListenerBase
     {
  

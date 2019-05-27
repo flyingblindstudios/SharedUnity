@@ -6,7 +6,7 @@ public class StateMachineState
 {
     public bool m_CanBeInterrupted = false;
     public List<StateCondition> m_LoopConditions = new List<StateCondition>(); // for now only AND-conditions
-    bool m_Loop = false;
+    public bool m_Loop = false;
     public StateMachineState()
     {
         if (m_LoopConditions.Count > 0)
