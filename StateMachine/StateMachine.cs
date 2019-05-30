@@ -29,6 +29,8 @@ public class StateMachine : StateMachineState
 
         if(m_CurrentStateIndex == -1)
         {
+            OnStateMachineStart(); //state machine starts execution
+
             m_CurrentStateIndex = 0;
             m_States[m_CurrentStateIndex].OnStateEnter();
         }
@@ -37,22 +39,23 @@ public class StateMachine : StateMachineState
         {
             m_States[m_CurrentStateIndex].OnStateExit();
 
+            //do i need to loop the state?
             bool isLoopingState = m_States[m_CurrentStateIndex].ShouldLoop();
 
+            //if i dont need to loop, go to next state
             if (!isLoopingState)
             {
                 m_CurrentStateIndex++;
             }
             
-
+            //was there a next state? if yes enter state, if not we are done anyway
             if (!this.IsDone()) // is statemachine done?
             {
                 m_States[m_CurrentStateIndex].OnStateEnter();
-            }
+            } //if we are done but the state machine loops itself then reset the statemachine
             else if (this.ShouldLoop()) // or loop condition
             {
-                m_CurrentStateIndex = 0;
-                m_States[m_CurrentStateIndex].OnStateEnter();
+                OnStateMachineEnd(); //-> state machine resets itself
             }
             
 
@@ -65,6 +68,20 @@ public class StateMachine : StateMachineState
         }
     }
 
+    //this is called when the statemachine will start execution
+    public virtual void OnStateMachineStart()
+    {
+        m_CurrentStateIndex = -1;
+    }
+
+    //this is called when the statemachine will end execution
+    public virtual void OnStateMachineEnd()
+    {
+        m_CurrentStateIndex = -1;
+    }
+
+    //these functions will only be called if the stateMachine is part of a stateMachine
+    //this relates to the state machine treated as a state that is executed by statemachine
     public override void OnStateEnter()
     {
         m_CurrentStateIndex = -1;
