@@ -29,6 +29,11 @@ public class StateWaitTime : StateMachineState
         m_PassedTime += Time.deltaTime;
     }
 
+    public override void OnStateAbort()
+    {
+        m_PassedTime = m_WaitTime;
+    }
+
     public override void OnStateEnter()
     {
         m_PassedTime = 0.0f;

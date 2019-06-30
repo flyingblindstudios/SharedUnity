@@ -31,7 +31,10 @@ public class UI_Popup : MonoBehaviour, Popup
 
     void OnDestroy()
     {
-        ServiceLocator.GetInstance().UnregisterService(this);
+        if(ServiceLocator.GetInstance())
+        { 
+            ServiceLocator.GetInstance().UnregisterService(this);
+        }
     }
 
 

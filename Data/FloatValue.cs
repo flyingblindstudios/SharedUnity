@@ -11,7 +11,7 @@ public class FloatValue : MonoBehaviour
     //onchange callback delegate
     public ON_CHANGE OnChange;
 
-    public string m_Name = "";
+    public string m_FloatName = "";
 
     public float m_Value;
 

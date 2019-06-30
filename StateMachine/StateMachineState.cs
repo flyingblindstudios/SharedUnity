@@ -7,12 +7,19 @@ public class StateMachineState
     public bool m_CanBeInterrupted = false;
     public List<StateCondition> m_LoopConditions = new List<StateCondition>(); // for now only AND-conditions
     public bool m_Loop = false;
+    public bool m_Break = false;
+
     public StateMachineState()
     {
         if (m_LoopConditions.Count > 0)
         {
             m_Loop = true;
         }
+    }
+
+    public void Break() // if a state breaks, looping is ignored
+    {
+        m_Break = true; 
     }
 
     public virtual void UpdateState()
@@ -30,12 +37,17 @@ public class StateMachineState
 
     }
 
+    public virtual void OnStateAbort()
+    {
+
+    }
+
     public virtual bool IsDone()
     {
         return false;
     }
 
-    public bool ShouldLoop()
+    public virtual bool ShouldLoop()
     {
         if (m_LoopConditions.Count <= 0)
         {

@@ -8,4 +8,6 @@ public interface I_NavAgent
     bool HasReachedDestination();
     Vector3 GetDirection();
     Vector3 GetNormal();
+    Vector3 GetPosition();
+    Vector3 GetTargetPosition();
 }

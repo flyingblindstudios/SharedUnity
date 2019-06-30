@@ -10,6 +10,12 @@ namespace Shared.SaveGame
         public static MODE Mode = MODE.BINARY;
         public static int version = 1;
 
+
+        public static void DeleteSaveGame(string _path)
+        {
+            File.Delete(_path);
+        }
+
         public async static void WriteSaveGame(ISaveable _saveable, string _path)
         {
             MemoryStream memStream = new MemoryStream();
@@ -106,6 +112,36 @@ namespace Shared.SaveGame
                 AddValue("y", _value.y, _stream);
             }
 
+        }
+
+        public static void AddValue(string _name, int[] _value, Stream _stream)
+        {
+            AddValue(_name+"_size", _value.Length, _stream);
+
+            //_value.
+
+            //for(int i = 0; i < _value.Length; i++)
+            byte[] bytes = new byte[_value.Length * 4];
+
+            Buffer.BlockCopy(_value,0, bytes,0, bytes.Length);
+
+            _stream.Write(bytes,0, bytes.Length);
+
+        }
+
+        public static int[] GetInArray(Stream _stream)
+        {
+            int length = GetInt(_stream);
+
+            byte[] bytes = new byte[length * 4];
+
+            _stream.Read(bytes,0, bytes.Length);
+
+            int[] intArray = new int[length];
+
+            Buffer.BlockCopy(bytes, 0, intArray, 0, bytes.Length);
+
+            return intArray;
         }
 
         public static Vector3 GetVector3(Stream _stream)
