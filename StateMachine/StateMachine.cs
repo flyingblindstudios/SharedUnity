@@ -26,10 +26,20 @@ public class StateMachine : StateMachineState
         m_States.Add(_state);
     }
 
+    public override void Break()
+    {
+        OnStateAbort();
+    }
+
     public override void UpdateState()
     {
         if (IsDone())
         {
+            return;
+        }
+        else if (m_Break)
+        {
+            OnStateAbort();
             return;
         }
 
@@ -54,9 +64,11 @@ public class StateMachine : StateMachineState
     {
         Debug.Log("STATE aborts " + m_CurrentStateIndex);
         if (m_CurrentStateIndex < m_States.Count && m_CurrentStateIndex >= 0)
-        { 
+        {
             m_States[m_CurrentStateIndex].OnStateAbort();
         }
+
+        m_CurrentStateIndex = m_States.Count + 1;
     }
 
     //these functions will only be called if the stateMachine is part of a stateMachine
@@ -70,8 +82,10 @@ public class StateMachine : StateMachineState
     {
     }
 
-
-
+    public void CancleStateMachine()
+    {
+        OnStateAbort();
+    }
 
     public sealed override bool IsDone()
     {

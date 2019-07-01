@@ -17,7 +17,7 @@ public class StateMachineState
         }
     }
 
-    public void Break() // if a state breaks, looping is ignored
+    public virtual void Break() // if a state breaks, looping is ignored
     {
         m_Break = true; 
     }

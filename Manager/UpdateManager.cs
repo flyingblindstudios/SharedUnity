@@ -7,6 +7,11 @@ namespace Shared.Manager
         public delegate void UPDATE_DELEGATE( float _DeltaTime );
 
         /*UNITY_UPDATES*/
+        //Use a lacy update of 0.0003333f
+        float lacyUpdateTime = 0.03333333333f;
+        float lacyDelta = 0.0f;
+
+        public UPDATE_DELEGATE OnLacyUpdate;
 
         public UPDATE_DELEGATE OnUpdatePre;
         public UPDATE_DELEGATE OnUpdate;
@@ -29,6 +34,14 @@ namespace Shared.Manager
             OnUpdatePre?.Invoke(delta);
             OnUpdate?.Invoke(delta);
             OnUpdatePost?.Invoke(delta);
+
+            lacyDelta += delta;
+
+            if (lacyDelta >= lacyUpdateTime)
+            {
+                OnLacyUpdate(lacyDelta);
+                lacyDelta = 0.0f;
+            }
         }
 
         private void LateUpdate()

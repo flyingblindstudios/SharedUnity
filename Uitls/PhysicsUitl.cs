@@ -8,6 +8,15 @@ using UnityEngine;
 public class PhysicsUitl  {
 
 
+    public static bool IsGameObjectLayerInLayerMask(int goLayer, LayerMask _mask)
+    {
+        if (((1 << goLayer) & _mask.value) != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     public static LayerMask LayerMaskWithOut(string _without)
     {
