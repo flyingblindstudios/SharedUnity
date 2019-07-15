@@ -3,16 +3,38 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class UnityNavAgent : MonoBehaviour, I_NavAgent
 {
+    [SerializeField]
+    float m_WalkingSpeed = 0.35f;
+
+    [SerializeField]
+    float m_RunningSpeed = 0.7f;
+
     NavMeshAgent m_UnityAgent;
+
+    bool m_Running = false;
 
     private void Start()
     {
         m_UnityAgent = GetComponent<NavMeshAgent>();
     }
 
-    public void SetTarget(Vector3 _targetPoint)
+    public void SetTarget(Vector3 _targetPoint, bool _running = false)
     {
+        if (_running)
+        {
+            m_UnityAgent.speed = GetRunningSpeed();
+        }
+        else
+        {
+            m_UnityAgent.speed = GetWalkingSpeed();
+        }
+        m_Running = _running;
         m_UnityAgent.SetDestination(_targetPoint);
+    }
+
+    public bool IsRunning()
+    {
+        return m_Running;
     }
 
     public bool HasReachedDestination()
@@ -52,6 +74,17 @@ public class UnityNavAgent : MonoBehaviour, I_NavAgent
     {
         return m_UnityAgent.destination;
     }
+
+    public float GetWalkingSpeed()
+    {
+        return m_WalkingSpeed;
+    }
+
+    public float GetRunningSpeed()
+    {
+        return m_RunningSpeed;
+    }
+
 
     public void OnDrawGizmosSelected()
     {
