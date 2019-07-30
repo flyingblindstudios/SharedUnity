@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Health : FloatValue
 {
+    public ON_CHANGE OnDamage;
+
+
     float m_DefaultHealth;
 
     public void Awake()
@@ -16,6 +19,8 @@ public class Health : FloatValue
         float value = GetValue() - _Amount;
         value = Mathf.Clamp(value, 0, m_DefaultHealth);
         SetValue(value);
+
+        OnDamage?.Invoke(this);
     }
 
     public override void SetValue(float value)
