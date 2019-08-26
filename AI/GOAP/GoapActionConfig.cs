@@ -13,6 +13,7 @@ namespace Shared.AI
     {
         HashSet<string> GetPreConditions();
         HashSet<string> GetPostEffects();
+        bool IsProceduralConditionValid(Agent _agent);
     }
 
     public class GoapActionConfig : ScriptableObject, I_GoapAction, ISerializationCallbackReceiver
@@ -37,6 +38,11 @@ namespace Shared.AI
         public void OnAfterDeserialize()
         {
             //create the hashsets
+        }
+
+        public virtual bool IsProceduralConditionValid(Agent _agent)
+        {
+            return true;
         }
     }
 }

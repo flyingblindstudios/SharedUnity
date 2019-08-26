@@ -1,13 +1,80 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Shared.Data;
 
 namespace Shared.AI
-{ 
+{
     public class GoapPlanner
     {
+
+        //Creates a tree from an actionset and a goal
+        public TreeNode<I_GoapAction> CreateTree(HashSet<string> _goalState, I_GoapActionSet _actionSet )
+        {
+            return CreateTree(_goalState, _actionSet.GetActions());
+        }
+
+        public TreeNode<I_GoapAction> CreateTree(HashSet<string> _goalState, I_GoapAction[] _actions)
+        {
+            //the root node has no action
+            TreeNode<I_GoapAction> rootNode = new TreeNode<I_GoapAction>(null);
+
+            List<I_GoapAction> relevantActions = new List<I_GoapAction>();
+
+            //find all actions relavant to the goal?
+            for (int i = 0; i < _actions.Length; i++)
+            {
+                if (_actions[i].GetPostEffects().Count > 0 && _actions[i].GetPostEffects().IsSubsetOf(_goalState))
+                {
+                    relevantActions.Add(_actions[i]);
+                }
+            }
+
+
+
+            List<TreeNode<I_GoapAction>> nodesAdded = new List<TreeNode<I_GoapAction>>();
+            //find all permutations that satisfy the goal? //combine all actions inside the tree
+            for (int i = 0; i < relevantActions.Count; i++)
+            {
+                TreeNode<I_GoapAction> activeNode = rootNode;
+                //this is what we still need to to do
+                HashSet<string> tmpGoalSet = new HashSet<string>();
+                tmpGoalSet.UnionWith(_goalState);
+                tmpGoalSet.ExceptWith(relevantActions[i].GetPostEffects());
+
+                TreeNode<I_GoapAction> treeThisAction = activeNode.Add(relevantActions[i]);
+                nodesAdded.Add(treeThisAction);
+                for (int x = 0; x < relevantActions.Count; x++)
+                {
+                    //if our action then continue
+                    if (relevantActions[x] == relevantActions[i])
+                    {
+                        continue;
+                    }
+
+                    if (relevantActions[x].GetPostEffects().IsSubsetOf(tmpGoalSet))
+                    {
+                        //we want this action
+                        tmpGoalSet.ExceptWith(relevantActions[x].GetPostEffects());
+                        activeNode = activeNode.Add(relevantActions[x]);
+                        nodesAdded.Add(activeNode);
+                    }
+                }
+            }
+
+            //fill up all requirements
+            for (int i = 0; i < nodesAdded.Count; i++)
+            {
+                TreeNode<I_GoapAction> treeThisAction = CreateTree(nodesAdded[i].GetValue().GetPreConditions(), _actions);
+                nodesAdded[i].AddTree(treeThisAction);
+            }
+
+            return rootNode;
+        }
+
+
         //ToDo multithread this
-        List<I_GoapAction> Plan(HashSet<string> _worldState, HashSet<string> _goalState, I_GoapActionSet _actions)
+        /*public List<I_GoapAction> Plan(HashSet<string> _worldState, HashSet<string> _goalState, TreeNode<I_GoapAction> _actionTree)
         {
             HashSet<string> goalSet = new HashSet<string>();
 
@@ -68,7 +135,7 @@ namespace Shared.AI
                 {
                 }
             }
-        }
+        }*/
 
     }
 

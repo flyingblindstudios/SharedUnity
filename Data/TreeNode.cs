@@ -5,6 +5,7 @@ namespace Shared.Data
 {
     public class TreeNode<T>
     {
+        public TreeNode<T> parent = null;
         T m_Value;
 
         List<TreeNode<T>> childs = new List<TreeNode<T>>();
@@ -14,14 +15,30 @@ namespace Shared.Data
             m_Value = _value;
         }
 
-        public void Add(T _value)
+        public TreeNode<T> Add(T _value)
         {
-            childs.Add(new TreeNode<T>(_value));
+            TreeNode<T> node = new TreeNode<T>(_value);
+            childs.Add(node);
+            node.parent = this;
+            return node;
         }
 
-        int ChildCount()
+        public int ChildCount()
         {
             return childs.Count;
+        }
+
+        public T GetValue()
+        {
+            return m_Value;
+        }
+
+        public void AddTree(TreeNode<T>  _tree)
+        {
+            for (int i = 0; i < _tree.ChildCount(); i++)
+            {
+
+            }
         }
     }
 }
