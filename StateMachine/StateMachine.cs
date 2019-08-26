@@ -13,8 +13,8 @@ public class StateMachine : StateMachineState
     * A State machine can loop states, but it cant loop itself!
     */
 
-    List<StateMachineState> m_States = new List<StateMachineState>();
-    int m_CurrentStateIndex = -1;
+    public List<StateMachineState> m_States = new List<StateMachineState>();
+    public int m_CurrentStateIndex = -1;
 
     public void AddStateAtFirst(StateMachineState _state)
     {
@@ -28,7 +28,7 @@ public class StateMachine : StateMachineState
 
     public override void Break()
     {
-        OnStateAbort();
+        m_Break = true;
     }
 
     public override void UpdateState()
@@ -49,10 +49,14 @@ public class StateMachine : StateMachineState
             m_States[m_CurrentStateIndex].OnStateEnter();
         }
 
-        if (m_States[m_CurrentStateIndex].IsDone() || m_States[m_CurrentStateIndex].m_Break)
+        if (m_States[m_CurrentStateIndex].m_Break)
+        {
+            m_Break = true;
+            return;
+        }
+        else if (m_States[m_CurrentStateIndex].IsDone())
         {
             NextState();
-
         }
         else
         {
@@ -60,14 +64,20 @@ public class StateMachine : StateMachineState
         }
     }
 
+    //if my parent state machine breaks, propagate abort to other states and finish myself
     public override void OnStateAbort()
     {
-        Debug.Log("STATE aborts " + m_CurrentStateIndex);
+        //my parent breaks so i break;
+        m_Break = true;
+
+
+        //if my parent breaks i dont receive updates anymore so i have to abort my substates
         if (m_CurrentStateIndex < m_States.Count && m_CurrentStateIndex >= 0)
         {
             m_States[m_CurrentStateIndex].OnStateAbort();
         }
 
+        //statemachine is done
         m_CurrentStateIndex = m_States.Count + 1;
     }
 
@@ -80,11 +90,6 @@ public class StateMachine : StateMachineState
 
     public override void OnStateExit()
     {
-    }
-
-    public void CancleStateMachine()
-    {
-        OnStateAbort();
     }
 
     public sealed override bool IsDone()

@@ -97,4 +97,9 @@ public class UnityNavAgent : MonoBehaviour, I_NavAgent
         Gizmos.DrawLine(this.GetPosition(), this.GetTargetPosition());
     }
 
+    public float GetRemainingDistance()
+    {
+        return m_UnityAgent.remainingDistance;
+    }
+
 }

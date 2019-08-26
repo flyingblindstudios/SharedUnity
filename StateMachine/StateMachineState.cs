@@ -63,4 +63,9 @@ public class StateMachineState
         return loop;
     }
 
+    public virtual string GetDebugInfo()
+    {
+        return "";
+    }
+
 }

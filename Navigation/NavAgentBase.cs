@@ -13,4 +13,5 @@ public interface I_NavAgent
     float GetWalkingSpeed();
     float GetRunningSpeed();
     bool IsRunning();
+    float GetRemainingDistance();
 }

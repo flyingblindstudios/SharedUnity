@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 
 namespace Shared.SaveGame
 {
@@ -58,6 +61,27 @@ namespace Shared.SaveGame
             }
         }
 
+        public static void AddValue<T>(string _name,List<T> _list, Stream _stream) where T : new()
+        {
+            if (!typeof(T).IsSerializable && !(typeof(ISerializable).IsAssignableFrom(typeof(T))))
+            {
+                throw new InvalidOperationException("A serializable Type is required");
+            }
+
+            if (Mode == MODE.BINARY)
+            {
+                //AddValue("Length", _list.Count, _stream);
+                BinaryFormatter formater = new BinaryFormatter();
+               /* for (int i = 0; i < _list.Count; i++)
+                {
+                    formater.Serialize(_stream, _list[i]);
+                }*/
+                formater.Serialize(_stream, _list);
+
+                /*byte[] bytes = BitConverter.GetBytes(_value.bu);
+                 _stream.Write(bytes, 0, bytes.Length);*/
+            }
+        }
 
         public static void AddValue( string _name, string _value, Stream _stream )
         {
@@ -179,6 +203,16 @@ namespace Shared.SaveGame
         {
             // _stream.Write
             return "";
+        }
+
+        public static List<T> GetList<T>(Stream _stream) where T : new()
+        {
+            BinaryFormatter formater = new BinaryFormatter();
+            /* for (int i = 0; i < _list.Count; i++)
+             {
+                 formater.Serialize(_stream, _list[i]);
+             }*/
+            return (List<T>)formater.Deserialize(_stream);
         }
     }
 }
