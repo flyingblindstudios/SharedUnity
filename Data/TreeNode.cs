@@ -15,6 +15,12 @@ namespace Shared.Data
             m_Value = _value;
         }
 
+        public TreeNode(T _value, TreeNode<T> _parent)
+        {
+            m_Value = _value;
+            parent = _parent;
+        }
+
         public TreeNode<T> Add(T _value)
         {
             TreeNode<T> node = new TreeNode<T>(_value);
@@ -31,14 +37,6 @@ namespace Shared.Data
         public T GetValue()
         {
             return m_Value;
-        }
-
-        public void AddTree(TreeNode<T>  _tree)
-        {
-            for (int i = 0; i < _tree.ChildCount(); i++)
-            {
-
-            }
         }
     }
 }

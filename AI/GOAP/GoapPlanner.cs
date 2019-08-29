@@ -8,135 +8,123 @@ namespace Shared.AI
     public class GoapPlanner
     {
 
-        //Creates a tree from an actionset and a goal
-        public TreeNode<I_GoapAction> CreateTree(HashSet<string> _goalState, I_GoapActionSet _actionSet )
+        //returns true if finds leave nodes
+        public static bool BuildTree(GoapNode _parentNode, List<GoapNode> _leaves, List<I_GoapAction> _remainingActions, HashSet<string> _goalState)
         {
-            return CreateTree(_goalState, _actionSet.GetActions());
-        }
+            bool foundSolution = false;
 
-        public TreeNode<I_GoapAction> CreateTree(HashSet<string> _goalState, I_GoapAction[] _actions)
-        {
-            //the root node has no action
-            TreeNode<I_GoapAction> rootNode = new TreeNode<I_GoapAction>(null);
-
-            List<I_GoapAction> relevantActions = new List<I_GoapAction>();
-
-            //find all actions relavant to the goal?
-            for (int i = 0; i < _actions.Length; i++)
+            for (int i = 0; i < _remainingActions.Count; i++)
             {
-                if (_actions[i].GetPostEffects().Count > 0 && _actions[i].GetPostEffects().IsSubsetOf(_goalState))
+                //check if we can use this action
+                if (_remainingActions[i].GetPreConditions().IsSubsetOf(_parentNode.currentState))
                 {
-                    relevantActions.Add(_actions[i]);
-                }
-            }
+					Debug.Log("Found valid action!");
+                    //found an action, create node and build with build tree with remaining actions
+                    GoapNode newNode = new GoapNode(_remainingActions[i]);
+                    newNode.parent = _parentNode;
+                    newNode.currentState.UnionWith(_parentNode.currentState);
+                    newNode.currentState.UnionWith(_remainingActions[i].GetPostEffects());
+                    newNode.runningCost = _parentNode.runningCost + _remainingActions[i].GetCost();
+
+                    
 
 
-
-            List<TreeNode<I_GoapAction>> nodesAdded = new List<TreeNode<I_GoapAction>>();
-            //find all permutations that satisfy the goal? //combine all actions inside the tree
-            for (int i = 0; i < relevantActions.Count; i++)
-            {
-                TreeNode<I_GoapAction> activeNode = rootNode;
-                //this is what we still need to to do
-                HashSet<string> tmpGoalSet = new HashSet<string>();
-                tmpGoalSet.UnionWith(_goalState);
-                tmpGoalSet.ExceptWith(relevantActions[i].GetPostEffects());
-
-                TreeNode<I_GoapAction> treeThisAction = activeNode.Add(relevantActions[i]);
-                nodesAdded.Add(treeThisAction);
-                for (int x = 0; x < relevantActions.Count; x++)
-                {
-                    //if our action then continue
-                    if (relevantActions[x] == relevantActions[i])
+                    if (_goalState.IsSubsetOf(newNode.currentState))
                     {
-                        continue;
+                        //found a solution
+                        foundSolution = true;
+                        _leaves.Add(newNode);
+                        Debug.Log("Found a solution!");
                     }
-
-                    if (relevantActions[x].GetPostEffects().IsSubsetOf(tmpGoalSet))
+                    else
                     {
-                        //we want this action
-                        tmpGoalSet.ExceptWith(relevantActions[x].GetPostEffects());
-                        activeNode = activeNode.Add(relevantActions[x]);
-                        nodesAdded.Add(activeNode);
+                        List<I_GoapAction> remainingActions = new List<I_GoapAction>(_remainingActions);
+                        remainingActions.RemoveAt(i); //remove used action
+
+                        foundSolution = BuildTree(newNode, _leaves, remainingActions, _goalState);
                     }
                 }
             }
+            
 
-            //fill up all requirements
-            for (int i = 0; i < nodesAdded.Count; i++)
-            {
-                TreeNode<I_GoapAction> treeThisAction = CreateTree(nodesAdded[i].GetValue().GetPreConditions(), _actions);
-                nodesAdded[i].AddTree(treeThisAction);
-            }
-
-            return rootNode;
+            return foundSolution;
         }
 
-
-        //ToDo multithread this
-        /*public List<I_GoapAction> Plan(HashSet<string> _worldState, HashSet<string> _goalState, TreeNode<I_GoapAction> _actionTree)
+        public static List<I_GoapAction> PlanDynamic(Agent _agent, HashSet<string> _worldState, HashSet<string> _goalState, I_GoapActionSet _actionSet)
         {
-            HashSet<string> goalSet = new HashSet<string>();
+            //Check is there an action which can just run on the current worldstate without building a tree?
 
-            goalSet.UnionWith(_goalState);
 
-            //this gives me the set that wants to be satisfied
-			goalSet.ExceptWith(_worldState);
+            //sort by number of effects
+            List<I_GoapAction> actions = new List<I_GoapAction>(_actionSet.GetActions());
 
-            List<I_GoapAction> finalSequence = null;
+            ///////TODO!!! Sort by number of preconditions
 
+
+            //this is returned
+            List<I_GoapAction> acitonSequence = new List<I_GoapAction>();
+
+            //check if one action can just satisfy
+            /*for (int i = 0; i < actions.Count; i++)
+            {
+                actions[i].ResetConditionCache();
+                if (actions[i].GetPreConditions().IsSubsetOf(_worldState) && actions[i].IsProceduralConditionValid(_agent))
+                {
+                    HashSet<string> newWorldState = new HashSet<string>();
+                    newWorldState.UnionWith(_worldState);
+                    newWorldState.UnionWith(actions[i].GetPostEffects());
+
+                    if (_goalState.IsSubsetOf(newWorldState))
+                    {
+                        acitonSequence.Add(actions[i]);
+                        return acitonSequence;
+                    }
+
+                }
+            }*/
+
+
+            List<GoapNode> leaves = new List<GoapNode>(); //leaves are the solutions
+
+            GoapNode rootNode = new GoapNode(null, null,_worldState,0);
+
+            
+            bool success = BuildTree(rootNode, leaves, actions, _goalState);
+
+
+            if (success)
+            {
+                Debug.Log("Found solution");
+            }
+
+
+            //return goap actions with cheapest cost
             float smallestCost = float.MaxValue;
-
-            //find all actions with statisfy the goal
-            I_GoapAction[] allActions = _actions.GetActions();
-            for (int i = 0; i < allActions.Length; i++)
+            int index = -1;
+            for (int i = 0; i < leaves.Count; i++)
             {
-        
-                HashSet<string> posteffects = allActions[i].GetPostEffects();
-
-                if (goalSet.IsSubsetOf(posteffects))
+                if (smallestCost > leaves[i].runningCost)
                 {
-                    //action satisfies the goal
-                    List<I_GoapAction> actionSequence = new List<I_GoapAction>();
-                    float cost = 0;
+                    index = i;
+                }
+            }
 
-                    actionSequence.Add(allActions[i]);
+			Debug.Log("Found Solutions: " + leaves.Count);
 
-                    if (FindActionSequence(ref actionSequence, ref cost, allActions, allActions[i].GetPreConditions()))
-                    {
-                        if(cost < smallestCost)
-                        {
-                            smallestCost = cost;
-                            //found sutible action sequence
-                            finalSequence = actionSequence;
-                        }
+            if(leaves.Count > 0)
+			{ 
+                GoapNode currentNode = leaves[index];
+                while (currentNode != null)
+                {
+                    if(currentNode.GetValue() != null)
+                    { 
+                        acitonSequence.Insert(0,(I_GoapAction)currentNode.GetValue().Clone());
                     }
-
+                    currentNode = (GoapNode)currentNode.parent;
                 }
-            }
-
-			return finalSequence;
+			}
+			return acitonSequence;
         }
-
-        //returns if it can satisfy action chain
-        bool FindActionSequence(ref List<I_GoapAction> _actionSequence, ref float _cost, I_GoapAction[] _availableActions, HashSet<string> _goal)
-        {
-            for (int i = 0; i < _availableActions.Length; i++)
-            {
-                //if action os already in squence contnue? this wont work with multiple go to actions..
-                if (_actionSequence.Contains(_availableActions[i]))
-                {
-                    continue;
-                }
-
-                HashSet<string> posteffects = _availableActions[i].GetPostEffects();
-
-                if (goalSet.IsSubsetOf(posteffects))
-                {
-                }
-            }
-        }*/
-
     }
 
 }
