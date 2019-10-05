@@ -18,7 +18,7 @@ namespace Shared.AI
                 //check if we can use this action
                 if (_remainingActions[i].GetPreConditions().IsSubsetOf(_parentNode.currentState))
                 {
-					Debug.Log("Found valid action!");
+					//Debug.Log("Found valid action!");
                     //found an action, create node and build with build tree with remaining actions
                     GoapNode newNode = new GoapNode(_remainingActions[i]);
                     newNode.parent = _parentNode;
@@ -34,7 +34,7 @@ namespace Shared.AI
                         //found a solution
                         foundSolution = true;
                         _leaves.Add(newNode);
-                        Debug.Log("Found a solution!");
+                        //Debug.Log("Found a solution!");
                     }
                     else
                     {
@@ -50,7 +50,7 @@ namespace Shared.AI
             return foundSolution;
         }
 
-        public static List<I_GoapAction> PlanDynamic(Agent _agent, HashSet<string> _worldState, HashSet<string> _goalState, I_GoapActionSet _actionSet)
+        public static List<I_GoapAction> PlanDynamic(I_GoapAgent _agent, HashSet<string> _worldState, HashSet<string> _goalState, I_GoapActionSet _actionSet)
         {
             //Check is there an action which can just run on the current worldstate without building a tree?
 
@@ -117,8 +117,10 @@ namespace Shared.AI
                 while (currentNode != null)
                 {
                     if(currentNode.GetValue() != null)
-                    { 
-                        acitonSequence.Insert(0,(I_GoapAction)currentNode.GetValue().Clone());
+                    {
+                        I_GoapAction action = (I_GoapAction)currentNode.GetValue().Clone();
+                        acitonSequence.Insert(0, action);
+                        action.SetOwner(_agent);
                     }
                     currentNode = (GoapNode)currentNode.parent;
                 }
