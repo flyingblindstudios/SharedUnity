@@ -86,5 +86,10 @@ namespace Shared.AI
             return Vector3.zero;
         }
 
+        public override void InitPlanning(I_GoapAgent _agent, Vector2 _pos)
+        {
+            base.InitPlanning(_agent, _pos);
+        }
+
     }
 }

@@ -14,16 +14,22 @@ namespace Shared.AI
         HashSet<string> GetPreConditions();
         HashSet<string> GetPostEffects();
 
+        //this is called by the planner to initilize relevent data
+        void InitPlanning(I_GoapAgent _agent, Vector2 _position);
+
+        bool IsProceduralConditionValid();
+        
         //This resets the conditions cache for the procedural conditions
         void ResetConditionCache();
 
-
-        bool IsProceduralConditionValid(Agent _agent);
         float GetCost();
-        void SetOwner(I_GoapAgent _agent);
+        
+
         I_GoapAgent GetOwner();
         bool RequiresInRange();
         Vector3 GetTargetPosition();
+
+        
     }
 
     [CreateAssetMenu(menuName = "Shared/Ai/GoapAction")]
@@ -45,10 +51,8 @@ namespace Shared.AI
 
         [NonSerialized] private I_GoapAgent owner;
 
-        public void SetOwner(I_GoapAgent _agent)
-        {
-            owner = _agent;
-        }
+        [NonSerialized] private Vector2 ownerPos;
+
         public I_GoapAgent GetOwner()
         {
             return owner;
@@ -89,18 +93,19 @@ namespace Shared.AI
             conditionsChecked = false;
         }
 
-        public virtual bool CheckProceduralCondition(Agent _agent)
+        public virtual bool CheckProceduralCondition()
         {
             return true;
         }
 
 
         //final
-        public bool IsProceduralConditionValid(Agent _agent)
+        public bool IsProceduralConditionValid()
         {
+            //this is here to ensure during planing for the same action the condition is only validated once
             if (!conditionsChecked)
             {
-                conditionsValid = CheckProceduralCondition(_agent);
+                conditionsValid = CheckProceduralCondition();
                 conditionsChecked = true;
             }
 
@@ -114,7 +119,8 @@ namespace Shared.AI
 
         public object Clone()
         {
-            return Instantiate(this);
+            return this.MemberwiseClone();
+            //return Instantiate(this);
         }
 
         public bool RequiresInRange()
@@ -125,6 +131,12 @@ namespace Shared.AI
         public virtual Vector3 GetTargetPosition()
         {
             return Vector3.zero;
+        }
+
+        public virtual void InitPlanning(I_GoapAgent _agent, Vector2 _agentPos)
+        {
+            owner = _agent;
+            ownerPos = _agentPos;
         }
     }
 }

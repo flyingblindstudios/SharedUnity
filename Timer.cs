@@ -1,5 +1,5 @@
 ﻿using Shared.Manager;
-
+using System;
 namespace Shared.Core
 {
     public class Timer
@@ -7,9 +7,17 @@ namespace Shared.Core
         float cTime;
         float tTime;
         bool isRunning = false;
+        Action onDone = null;
+
         public Timer(float runTime)
         {
             tTime = runTime;
+        }
+
+        public Timer(float runTime, Action _onDone)
+        {
+            tTime = runTime;
+            onDone = _onDone;
         }
 
         public void Start()
@@ -38,6 +46,7 @@ namespace Shared.Core
             if (IsDone())
             {
                 Stop();
+                onDone?.Invoke();
             }
         }
 
