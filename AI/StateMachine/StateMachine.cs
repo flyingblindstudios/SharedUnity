@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Shared.AI
-{ 
+{
     public class StateMachine : StateMachineState
     {
         /*
@@ -40,9 +40,10 @@ namespace Shared.AI
                 return;
             }
 
-            if(m_CurrentStateIndex == -1)
+            if (m_CurrentStateIndex == -1)
             {
                 NextState();
+                return;
             }
 
             if (m_States[m_CurrentStateIndex].IsBreaking())
@@ -99,7 +100,7 @@ namespace Shared.AI
 
         public sealed override bool IsDone()
         {
-            if(m_CurrentStateIndex >= m_States.Count)
+            if (m_CurrentStateIndex >= m_States.Count)
             {
                 return true;
             }
@@ -110,10 +111,17 @@ namespace Shared.AI
 
         protected virtual void NextState()
         {
+            
+            GoToNextState();
+          
+            EnterNextState();
+        }
+
+        protected virtual void GoToNextState()
+        {
             if (m_CurrentStateIndex == -1)
             {
                 m_CurrentStateIndex = 0;
-                m_States[m_CurrentStateIndex].OnStateEnter();
                 return;
             }
 
@@ -130,7 +138,7 @@ namespace Shared.AI
             {
                 m_States[m_CurrentStateIndex].OnStateAbort();
             }
-        
+
             //do i need to loop the state?
             bool isLoopingState = m_States[m_CurrentStateIndex].ShouldLoop();
 
@@ -139,14 +147,15 @@ namespace Shared.AI
             {
                 m_CurrentStateIndex++;
             }
+        }
 
+        protected virtual void EnterNextState()
+        {
             //was there a next state? if yes enter state, if not we are done anyway
             if (!this.IsDone()) // is statemachine done?
             {
                 m_States[m_CurrentStateIndex].OnStateEnter();
             } //if we are done but the state machine loops itself then reset the statemachine
-
-
             //if done, dont do anything, cause isDone will be true
         }
     }

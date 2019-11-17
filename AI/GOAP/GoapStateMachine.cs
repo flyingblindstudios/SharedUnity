@@ -6,8 +6,10 @@ namespace Shared.AI
 { 
     public class GoapStateMachine : StateMachine
     {
+        enum State { NONE, EXECTUE_ACTION, GOTO_ACTION }
+        State currentState = State.EXECTUE_ACTION;
 
-        bool m_ReachedTarget = false;
+    
         I_NavAgent m_NavAgent;
         public GoapStateMachine(I_NavAgent _navAgent)
         {
@@ -16,37 +18,49 @@ namespace Shared.AI
 
         public override void UpdateState()
         {
-            
-
-            if (!m_ReachedTarget)
+            if (currentState == State.GOTO_ACTION)
             {
-                m_ReachedTarget = m_NavAgent.HasReachedDestination();
-                return;
+                bool reachedTarget = m_NavAgent.HasReachedDestination();
+                if (reachedTarget)
+                {
+                    currentState = State.EXECTUE_ACTION;
+                    EnterNextState();
+                }
             }
-
-            base.UpdateState();
+            else if (currentState == State.EXECTUE_ACTION)
+            {
+                base.UpdateState();
+            }
         }
 
         protected override void NextState()
         {
-            base.NextState();
+
+            GoToNextState();
+       
             //if i am not done running check if we need to be close to our target
             if (!IsDone())
-            { 
+            {
                 I_GoapAction sm = (I_GoapAction)GetCurrentState();
 
-                m_ReachedTarget = !sm.RequiresInRange();
-                if(!m_ReachedTarget)
+                bool inrange = sm.RequiresInRange();
+                if (inrange)
                 {
                     Vector3 target = sm.GetTargetPosition();
                     m_NavAgent.SetTarget(target);
-                    Debug.Log("Target position: " + target);
+                    currentState = State.GOTO_ACTION;
+                    Debug.Log("GOTO ACTION");
+                }
+                else
+                {
+                    EnterNextState();
+                    currentState = State.EXECTUE_ACTION;
                 }
             }
+            else
+            {
+                currentState = State.NONE;
+            }
         }
-
-
-
-
     }
 }
