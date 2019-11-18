@@ -1,9 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System;
 namespace Shared.AI
 {
+    [Serializable]
+    public class SharedGoapActionData
+    {
+        public int counter = 0;
+    }
+
     public abstract class StateGoapActionConfig : GoapActionConfig, I_StateMachineState
     {
         [Header("Statemachine Settings")]
@@ -11,7 +17,8 @@ namespace Shared.AI
         public List<StateCondition> m_LoopConditions = new List<StateCondition>(); // for now only AND-conditions
         public bool m_Loop = false;
         public bool m_Break = false;
- 
+
+        
 
         public virtual void Break()
         {

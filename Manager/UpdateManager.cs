@@ -30,7 +30,7 @@ namespace Shared.Manager
 
         private void Update()
         {
-            float delta = Time.unscaledDeltaTime * m_TimeScale;
+            float delta = Time.deltaTime * m_TimeScale;
             OnUpdatePre?.Invoke(delta);
             OnUpdate?.Invoke(delta);
             OnUpdatePost?.Invoke(delta);
@@ -46,7 +46,7 @@ namespace Shared.Manager
 
         private void LateUpdate()
         {
-            float delta = Time.unscaledDeltaTime * m_TimeScale;
+            float delta = Time.deltaTime * m_TimeScale;
             OnLateUpdatePre?.Invoke(delta);
             OnLateUpdate?.Invoke(delta);
             OnLateUpdatePost?.Invoke(delta);
@@ -54,10 +54,16 @@ namespace Shared.Manager
 
         private void FixedUpdate()
         {
-            float delta = Time.fixedUnscaledDeltaTime * m_TimeScale;
+            float delta = Time.fixedDeltaTime * m_TimeScale;
             OnFixedUpdatePre?.Invoke(delta);
             OnFixedUpdate?.Invoke(delta);
             OnFixedUpdatePost?.Invoke(delta);
+        }
+
+
+        public void SetTimeScale(float _timeScale)
+        {
+            Time.timeScale = _timeScale;
         }
 
     }

@@ -39,7 +39,10 @@ namespace Shared.AI
         public List<string> preConditions = new List<string>();
         public List<string> postEffects = new List<string>();
         public bool requiresInRange = false;
-        public float baseCost = 1; 
+        public float baseCost = 1;
+
+        //how many agents are using the action right now in there goap execution? This number is not the ground through. It will be delayed.
+        [NonSerialized] public SharedGoapActionData sharedGoapData = new SharedGoapActionData();
 
         [NonSerialized] private bool conditionsValid = true;
 
@@ -53,6 +56,12 @@ namespace Shared.AI
 
         [NonSerialized] private Vector2 ownerPos;
 
+
+        ~GoapActionConfig()
+        {
+            sharedGoapData.counter--;
+        }
+
         public I_GoapAgent GetOwner()
         {
             return owner;
@@ -62,6 +71,7 @@ namespace Shared.AI
         {
             return preConditionsSet;
         }
+    
         public HashSet<string> GetPostEffects()
         {
             return postEffectsSet;
@@ -119,6 +129,7 @@ namespace Shared.AI
 
         public object Clone()
         {
+            sharedGoapData.counter++;
             return this.MemberwiseClone();
             //return Instantiate(this);
         }
@@ -138,5 +149,6 @@ namespace Shared.AI
             owner = _agent;
             ownerPos = _agentPos;
         }
+ 
     }
 }
