@@ -155,11 +155,15 @@ namespace Shared.AI
             //return goap actions with cheapest cost
             float smallestCost = float.MaxValue;
             int index = -1;
+           // Debug.Log("found leaves: " + leaves.Count);
             for (int i = 0; i < leaves.Count; i++)
             {
+                
+                //Debug.Log("cost: " + leaves[i].runningCost);
                 if (smallestCost > leaves[i].runningCost)
                 {
                     index = i;
+                    smallestCost = leaves[i].runningCost;
                 }
             }
 

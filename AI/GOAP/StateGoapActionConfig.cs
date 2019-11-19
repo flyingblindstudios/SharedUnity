@@ -27,13 +27,10 @@ namespace Shared.AI
 
         public virtual string GetDebugInfo()
         {
-            return name;
+            return name + "(" +sharedGoapData.counter.ToString()+ ")";
         }
 
-        public virtual bool IsDone()
-        {
-            return false;
-        }
+        public abstract bool IsDone();
 
         public virtual void OnStateAbort()
         {
@@ -75,7 +72,7 @@ namespace Shared.AI
 
         public override float GetCost()
         {
-            return baseCost;
+            return base.GetCost();
         }
 
 

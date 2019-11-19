@@ -1,19 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public interface I_HasPosition
-{
-    Vector2 GetPositionXZ();
-   // Vector3 GetPosition();
-}
-
-public interface I_EnvironmentNode : I_HasPosition
-{
-    
-}
 namespace Shared.Manager
 {
+    public interface I_HasPosition
+    {
+        Vector2 GetPositionXZ();
+       // Vector3 GetPosition();
+    }
+
+    public interface I_EnvironmentNode : I_HasPosition
+    {
+    
+    }
+
 
     //environment query system
     //maybe add a service factory which can instantiate services
@@ -133,6 +133,9 @@ namespace Shared.Manager
             return ((EnvironmentQueryResult) m_EnvironmentNodesDict [typeof(T)]);
         }
 
+
+
+
         public T QueryRandomNodeOfType<T>() where T : I_EnvironmentNode
         {
             EnvironmentQueryResult pois = QueryNodesOfType<T>();
@@ -149,7 +152,7 @@ namespace Shared.Manager
         {
             EnvironmentQueryResult pois = QueryNodesOfType<T>();
             float closestDistance = float.MaxValue;
-            int closestIndex = 0;
+            int closestIndex = -1;
             for (int i = 0; i < pois.Count(); i++)
             {
                 Vector2 posXZ = pois.GetPositionXZ(i);
@@ -158,7 +161,10 @@ namespace Shared.Manager
             }
 
             _sqrDistance = closestDistance;
-
+            if (closestIndex == -1)
+            {
+                return default(T);
+            }
             return (T)pois.AtIndex(closestIndex);
         }
 

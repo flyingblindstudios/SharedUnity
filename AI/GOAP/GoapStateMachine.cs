@@ -62,5 +62,13 @@ namespace Shared.AI
                 currentState = State.NONE;
             }
         }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < m_States.Count; i++)
+            {
+                ((I_GoapAction)m_States[i]).Dispose();
+            }
+        }
     }
 }

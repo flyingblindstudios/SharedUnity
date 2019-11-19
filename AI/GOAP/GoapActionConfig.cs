@@ -29,15 +29,16 @@ namespace Shared.AI
         bool RequiresInRange();
         Vector3 GetTargetPosition();
 
-        
+        void Dispose();
     }
 
     [CreateAssetMenu(menuName = "Shared/Ai/GoapAction")]
     public class GoapActionConfig : ScriptableObject, I_GoapAction, ISerializationCallbackReceiver
     {
         [Header("Goap Settings")]
-        public List<string> preConditions = new List<string>();
-        public List<string> postEffects = new List<string>();
+        public List<string> invalidPreConditions = new List<string>(); //these conditions make action not usable!
+        public List<string> preConditions = new List<string>(); //these needs to be furfilled
+        public List<string> postEffects = new List<string>(); //this is the result
         public bool requiresInRange = false;
         public float baseCost = 1;
 
@@ -56,10 +57,19 @@ namespace Shared.AI
 
         [NonSerialized] private Vector2 ownerPos;
 
-
+        bool isDisposed = false;
         ~GoapActionConfig()
         {
+            if (!isDisposed)
+            {
+                Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
             sharedGoapData.counter--;
+            isDisposed = true;
         }
 
         public I_GoapAgent GetOwner()
@@ -124,7 +134,9 @@ namespace Shared.AI
 
         public virtual float GetCost()
         {
-            return baseCost;
+
+            Debug.Log("cost: " + sharedGoapData.counter);
+            return baseCost + sharedGoapData.counter;
         }
 
         public object Clone()
