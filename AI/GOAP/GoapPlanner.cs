@@ -139,6 +139,10 @@ namespace Shared.AI
 
             for (int i = 0; i < actions.Count; i++)
             {
+                if (actions[i] == null)
+                {
+                    Debug.LogError("One of the ations is null!");
+                }
                 actions[i].ResetConditionCache();
             }
 
@@ -177,6 +181,7 @@ namespace Shared.AI
                     if(currentNode.GetValue() != null)
                     {
                         I_GoapAction action = (I_GoapAction)currentNode.GetValue().Clone();
+                        action.ActionHasBeenPicked();
                         acitonSequence.Insert(0, action);
                     }
                     currentNode = (GoapNode)currentNode.parent;

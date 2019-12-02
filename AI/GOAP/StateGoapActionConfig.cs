@@ -16,7 +16,9 @@ namespace Shared.AI
         public bool m_CanBeInterrupted = false;
         public List<StateCondition> m_LoopConditions = new List<StateCondition>(); // for now only AND-conditions
         public bool m_Loop = false;
-        public bool m_Break = false;
+
+        [HideInInspector]
+        [NonSerialized]public bool m_Break = false;
 
         
 

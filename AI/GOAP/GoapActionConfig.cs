@@ -30,6 +30,8 @@ namespace Shared.AI
         Vector3 GetTargetPosition();
 
         void Dispose();
+
+        void ActionHasBeenPicked();
     }
 
     [CreateAssetMenu(menuName = "Shared/Ai/GoapAction")]
@@ -161,6 +163,10 @@ namespace Shared.AI
             owner = _agent;
             ownerPos = _agentPos;
         }
- 
+
+        public virtual void ActionHasBeenPicked()
+        {
+            
+        }
     }
 }
