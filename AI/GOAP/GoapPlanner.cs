@@ -7,6 +7,14 @@ namespace Shared.AI
 {
     public class GoapPlanner : Singleton<GoapPlanner>
     {
+
+        public class PlanningData
+        {
+            public I_GoapAgent goapAgent;
+            public Vector2 agentPositonXZ;
+        }
+        static PlanningData planningData = new PlanningData();
+
         ConcurrentQueue<GoapRequest> pendingRequests = new ConcurrentQueue<GoapRequest>();
 
         protected class GoapRequest
@@ -59,8 +67,10 @@ namespace Shared.AI
 
             for (int i = 0; i < _remainingActions.Count; i++)
             {
+                planningData.goapAgent = _request.owner;
+                planningData.agentPositonXZ = _request.agentPos;
 
-                _remainingActions[i].InitPlanning(_request.owner, _request.agentPos);
+                _remainingActions[i].InitPlanning(planningData);
 
                 //check if we can use this action
                 if (_remainingActions[i].GetPreConditions().IsSubsetOf(_parentNode.currentState) && _remainingActions[i].IsProceduralConditionValid())

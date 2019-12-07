@@ -15,7 +15,7 @@ namespace Shared.AI
         HashSet<string> GetPostEffects();
 
         //this is called by the planner to initilize relevent data
-        void InitPlanning(I_GoapAgent _agent, Vector2 _position);
+        void InitPlanning(GoapPlanner.PlanningData _planningData);
 
         bool IsProceduralConditionValid();
         
@@ -38,9 +38,9 @@ namespace Shared.AI
     public class GoapActionConfig : ScriptableObject, I_GoapAction, ISerializationCallbackReceiver
     {
         [Header("Goap Settings")]
-        public List<string> invalidPreConditions = new List<string>(); //these conditions make action not usable!
-        public List<string> preConditions = new List<string>(); //these needs to be furfilled
-        public List<string> postEffects = new List<string>(); //this is the result
+       // public List<string> invalidPreConditions = new List<string>(); //these conditions make action not usable!
+        public List<GoapEffect> preConditions = new List<GoapEffect>(); //these needs to be furfilled
+        public List<GoapEffect> postEffects = new List<GoapEffect>(); //this is the result
         public bool requiresInRange = false;
         public float baseCost = 1;
 
@@ -100,12 +100,13 @@ namespace Shared.AI
             preConditionsSet.Clear();
             for (int i = 0; i < preConditions.Count; i++)
             {
-                preConditionsSet.Add(preConditions[i]);
+                //preConditionsSet.Add(preConditions[i]);
+                preConditionsSet.Add(GoapEffect.IdNames[preConditions[i].value] );
             }
             postEffectsSet.Clear();
             for (int i = 0; i < postEffects.Count; i++)
             {
-                postEffectsSet.Add(postEffects[i]);
+                postEffectsSet.Add(GoapEffect.IdNames[postEffects[i].value] );
             }
 
         }
@@ -158,10 +159,10 @@ namespace Shared.AI
             return Vector3.zero;
         }
 
-        public virtual void InitPlanning(I_GoapAgent _agent, Vector2 _agentPos)
+        public virtual void InitPlanning(GoapPlanner.PlanningData _planningData)
         {
-            owner = _agent;
-            ownerPos = _agentPos;
+            owner = _planningData.goapAgent;
+            ownerPos = _planningData.agentPositonXZ;
         }
 
         public virtual void ActionHasBeenPicked()
