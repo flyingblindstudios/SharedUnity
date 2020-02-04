@@ -25,7 +25,7 @@ public class UI_Popup : MonoBehaviour, Popup
 
     private void Awake()
     {
-        ServiceLocator.GetInstance().RegisterServiceAsType(this, typeof(Popup));
+        ServiceLocator.RegisterServiceAsType(this, typeof(Popup));
         m_PopupContent.SetActive(false);
     }
 
@@ -33,7 +33,7 @@ public class UI_Popup : MonoBehaviour, Popup
     {
         if(ServiceLocator.GetInstance())
         { 
-            ServiceLocator.GetInstance().UnregisterService(this);
+            ServiceLocator.UnregisterService(this);
         }
     }
 

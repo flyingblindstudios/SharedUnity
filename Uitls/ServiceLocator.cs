@@ -40,12 +40,24 @@ public class ServiceLocator : Singleton<ServiceLocator>
         //if already there assign
     }
 
-    public void UnregisterService(I_Service _service)
+    public static void UnregisterService(I_Service _service)
+    {
+        if (GetInstance())
+        {
+            GetInstance().Unregister(_service);
+        }
+    }
+
+    public void Unregister(I_Service _service)
     {
         m_Services.Remove(_service.GetType());
     }
+    public static void RegisterServiceAsType(I_Service _service, System.Type _type)
+    {
+        GetInstance().RegisterAsType(_service, _type);
+    }
 
-    public void RegisterServiceAsType(I_Service _service, System.Type _type)
+    public void RegisterAsType(I_Service _service, System.Type _type)
     {
 
 
@@ -62,7 +74,12 @@ public class ServiceLocator : Singleton<ServiceLocator>
         CheckServiceReadyQueue(_type, _service);
     }
 
-    public void RegisterService(I_Service _service)
+    public static void RegisterService(I_Service _service)
+    {
+        GetInstance().Register(_service);
+    }
+
+    public void Register(I_Service _service)
     {
         RegisterServiceAsType(_service, _service.GetType());
     }
